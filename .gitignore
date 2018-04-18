@@ -1,0 +1,7 @@
+.DS_Store
+.classpath
+.project
+.settings
+examples/cwl-engine*
+dependency-reduced-pom.xml
+target

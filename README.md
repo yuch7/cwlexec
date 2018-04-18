@@ -17,7 +17,7 @@ Installing `cwlexec` is a simple process of downloading and extracting the packa
 
 Before downloading the package, make sure you installed [IBM Spectrum LSF 10.1.0.3](https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_welcome/lsf_welcome.html) (or above) and Java Runtime Environment (version 8), and that you set the `JAVA_HOME` environment variable.
 
-Download the latest release available at https://github.ibm.com/platformcomputing/cwl-engine and extract the package.
+Download the latest release available at https://raw.githubusercontent.com/IBMSpectrumComputing/cwlexec/master/release/cwlexec-0.1.tar.gz and extract the package.
 
 ```
 tar xzvf cwlexec-0.1.tar.gz

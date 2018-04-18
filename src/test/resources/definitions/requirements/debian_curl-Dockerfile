@@ -1,0 +1,7 @@
+FROM debian:stretch-slim
+
+RUN set -x \
+	&& apt update \
+	&& apt install -y curl
+
+CMD ["bash"]

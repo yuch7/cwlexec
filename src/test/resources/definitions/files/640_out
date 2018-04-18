@@ -1,0 +1,41 @@
+Sender: LSF System <lsfadmin@weliu0.novalocal>
+Subject: Job 640: <echo Hello world!> in cluster <weliu-cluster> Done
+
+Job <echo Hello world!> was submitted from host <weliu0.novalocal> by user <weliu> in cluster <weliu-cluster> at Thu Jan 25 03:14:46 2018
+Job was executed on host(s) <weliu0.novalocal>, in queue <normal>, as user <weliu> in cluster <weliu-cluster> at Thu Jan 25 03:14:47 2018
+</home/weliu> was used as the home directory.
+</home/weliu/cwl-workdir/6e78fa75-6684-4b97-9355-64bbafd931c0> was used as the working directory.
+Started at Thu Jan 25 03:14:47 2018
+Terminated at Thu Jan 25 03:14:47 2018
+Results reported at Thu Jan 25 03:14:47 2018
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+echo Hello world!
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   0.01 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   0 sec.
+    Turnaround time :                            1 sec.
+
+The output (if any) follows:
+
+Hello world!
+
+
+PS:
+
+Read file <640_err> for stderr output of this job.

@@ -1,0 +1,68 @@
+#!/bin/sh
+
+#**************************************************************************
+# Copyright 2002-2012 the original author or authors.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#**************************************************************************
+
+# Check LSF environment
+LSF_LOWEST_VERSION="10.1.0.3"
+LSF_ID=`type lsid 2>/dev/null`
+if [ $? -eq 0 ]; then
+    LSF_VERSION=`$LSF_ID 2>&1 | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+"`
+    SORTED_LSF_VERSION=`echo "$LSF_VERSION $LSF_LOWEST_VERSION" | tr " " "\n" | sort -V | head -n 1`
+    if [ "$SORTED_LSF_VERSION" != "$LSF_LOWEST_VERSION" ]; then
+        echo "The IBM Spectrum LSF version must be no less than 10.1.0.3"
+        exit 1
+    fi
+else
+    echo "An IBM Spectrum LSF (version >=10.1.0.3) runtime environment is required."
+    exit 1
+fi
+
+# Check Java environment
+JAVA_LOWEST_VERSION="1.8.0"
+JAVA_PATH=`type java 2>/dev/null`
+if [ $? -eq 0 ]; then
+    JAVA_BIN="java"
+elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ];  then
+    JAVA_BIN="$JAVA_HOME/bin/java"
+else
+    echo "A java (version >= $JAVA_LOWEST_VERSION) runtime environment is required."
+    exit 1
+fi
+
+JAVA_VERSION=`"$JAVA_BIN" -version 2>&1 | awk -F '"' '/version/ {print $2}'`
+SORTED_JAVA_VERSION=`echo "$JAVA_VERSION $JAVA_LOWEST_VERSION" | tr " " "\n" | sort -V | head -n 1`
+if [ "$SORTED_JAVA_VERSION" != "$JAVA_LOWEST_VERSION" ]; then
+    echo "The java version must be no less than $JAVA_LOWEST_VERSION"
+    exit 1
+fi
+
+# Run cwlexec-*.jar
+if [ -z "$CWL_EXEC_HOME" ]; then
+    if [ -L "$0" ]; then
+        CWL_EXEC_PATH=`realpath $0`
+    else
+        CWL_EXEC_PATH="$0" 
+    fi
+    CWL_EXEC_PATH=`dirname $CWL_EXEC_PATH`
+    CWL_EXEC_HOME=`cd $CWL_EXEC_PATH; pwd`
+fi
+
+CWL_EXEC_LIBS_PATH="$CWL_EXEC_HOME/libs"
+CWL_EXEC_JAR_LIBS=`find $CWL_EXEC_LIBS_PATH -type f | awk '{printf("%s:", $1)}'`
+CWL_EXEC_MAIN_CLASS="com.ibm.spectrumcomputing.cwl.Application"
+
+$JAVA_BIN -classpath $CWL_EXEC_JAR_LIBS $CWL_EXEC_MAIN_CLASS "$@"

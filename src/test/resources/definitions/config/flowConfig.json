@@ -1,0 +1,10 @@
+{
+	"queue": "testQ",
+	"project": "testPro",
+	"rerunnable": true,
+	"post-failure-script": {
+		"script": "/path/to/recoverscript.sh",
+		"timeout": 10,
+		"retry": 2
+	}
+}

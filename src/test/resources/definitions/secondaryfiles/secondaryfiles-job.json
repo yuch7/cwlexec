@@ -1,0 +1,18 @@
+{
+    "fasta_path": {
+        "class": "File",
+        "location": "files/ref.fasta"
+    },
+    "fasta_test": {
+        "class": "File",
+        "location": "files/ref.test.test"
+    },
+    "input0": {
+        "class": "File",
+        "location": "files/test.bam"
+    },
+    "input1": {
+        "class": "File",
+        "location": "files/test.bam"
+    }
+}

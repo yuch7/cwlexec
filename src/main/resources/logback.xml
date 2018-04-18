@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+	<appender name="client" class="ch.qos.logback.core.ConsoleAppender">
+		<target>System.err</target>
+		<encoder>
+			<pattern>[%d{HH:mm:ss.SSS}] %-5level - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="ch.qos.logback" level="ERROR" />
+	<logger name="org.jboss" level="ERROR" />
+	<logger name="org.hibernate" level="ERROR" />
+	<logger name="com.ibm.spectrumcomputing.cwl" level="INFO" />
+
+	<root level="debug">
+		<appender-ref ref="client" />
+	</root>
+</configuration>

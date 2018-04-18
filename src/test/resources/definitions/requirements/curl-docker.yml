@@ -1,0 +1,4 @@
+class: DockerRequirement
+dockerPull: debian:stretch-slim
+dockerFile: >
+ $import:debian_curl-Dockerfile

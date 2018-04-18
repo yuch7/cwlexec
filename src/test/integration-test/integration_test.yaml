@@ -1,0 +1,198 @@
+# case 1
+- output:
+     "output": {
+         "class": "File",
+         "location": "a.out"
+     }
+  tool: integration/compile.cwl#main
+  doc: Test $graph 
+
+# case 2
+- output:
+     "file": {
+         "checksum": "sha1$84cd2cc1eda29d99dd06be5de6da4ef54efad05b",
+         "class": "File",
+         "location": "1.txt",
+         "size": 14
+     }
+  tool: integration/shellquote-workflow.cwl#main
+  job: integration/shellquote-workflow-job.yml
+  doc: Test shell quote
+
+# case 3
+- output: {}
+  tool: integration/diverge-workflow.cwl#main
+  job: integration/diverge-workflow-job.yml
+  doc: Test a diverge workflow
+
+# Common Workflow Language User Guide - examples
+# http://www.commonwl.org/user_guide/
+# below cases are unsupported
+# - Metadata and Authorship
+# - Custom Types (SoftwareRequirement)
+# - Specifying Software Requirements
+
+# case 4
+- output: {}
+  tool: integration/1st-tool.cwl
+  job: integration/echo-job.yml
+  doc: First Example
+
+# case 5
+- output: {}
+  tool: integration/inp.cwl
+  job: integration/inp-job.yml
+  doc: Essential Input Parameters
+
+# case 6
+- output:
+     "example_out": {
+         "checksum": "sha1$da39a3ee5e6b4b0d3255bfef95601890afd80709",
+         "class": "File",
+         "location": "hello.txt"
+     }
+  tool: integration/tar.cwl
+  job: integration/tar-job.yml
+  doc: Returning Output Files
+
+# case 7
+- output:
+     "output": {
+         "checksum": "sha1$47a013e660d408619d894b20806b1d5086aab03b",
+         "class": "File",
+         "location": "output.txt",
+         "size": 13
+     }
+  tool: integration/stdout.cwl
+  job: integration/echo-job.yml
+  doc: Capturing Standard Output
+
+# case 8
+- output:
+     "example_out": {
+         "checksum": "sha1$da39a3ee5e6b4b0d3255bfef95601890afd80709",
+         "class": "File",
+         "location": "goodbye.txt"
+     }
+  tool: integration/tar-param/tar-param.cwl
+  job: integration/tar-param/tar-param-job.yml
+  doc: Parameter References
+
+# case 9
+- output: {}
+  tool: integration/array-inputs/array-inputs.cwl
+  job: integration/array-inputs/array-inputs-job.yml
+  doc: Array Inputs
+
+# case10
+- output:
+     "output": [{
+         "checksum": "sha1$da39a3ee5e6b4b0d3255bfef95601890afd80709",
+         "class": "File"
+     }, {
+         "checksum": "sha1$da39a3ee5e6b4b0d3255bfef95601890afd80709",
+         "class": "File"
+     }]
+  tool: integration/array-outputs/array-outputs.cwl
+  job: integration/array-outputs/array-outputs-job.yml
+  doc: Array Outputs
+
+# case 11
+- output: {}
+  tool: integration/env-var/env.cwl
+  job: integration/env-var/echo-job.yml
+  doc: Environment Variables
+
+# case 12
+- output: {}
+  tool: integration/expression/expression.cwl
+  doc: JavaScript Expressions
+
+# case 13
+- output: {}
+  tool: integration/createfile/createfile.cwl
+  job: integration/createfile/echo-job.yml
+  doc: Creating Files at Runtime
+
+# case 14
+- output:
+     "report": {
+         "class": "File",
+         "location": "output.txt",
+     }
+  tool: integration/metadata/metadata_example.cwl
+  job: integration/metadata/sample.yml
+  doc: File Formats
+
+# case 15
+- output: {}
+  tool: integration/record/record.cwl
+  job: integration/record/record-job2.yml
+  doc: Advanced Inputs
+
+# case 16 - docker requirement
+- output: {}
+  tool: integration/docker/docker.cwl
+  job: integration/docker/docker-job.yml
+  doc: Running Tools Inside Docker
+
+# case 17 - docker requirement
+- output:
+     "classfile": {
+         "checksum": "sha1$fdb876b40ad9ebc7fee873212e02d5940588642e",
+         "class": "File",
+         "location": "Hello.class",
+         "size": 184
+     }
+  tool: integration/arguments/arguments.cwl
+  job: integration/arguments/arguments-job.yml
+  doc: Additional Arguments and Parameters
+
+# case 18 - docker requirement
+- output:
+     "classfile": {
+         "checksum": "sha1$fdb876b40ad9ebc7fee873212e02d5940588642e",
+         "class": "File",
+         "location": "Hello.class",
+         "size": 184
+     }
+  tool: integration/linkfile/linkfile.cwl
+  job: integration/linkfile/arguments-job.yml
+  doc: Staging Input Files
+
+# case 19 - docker requirement
+- output:
+     "classout": {
+         "checksum": "sha1$e68df795c0686e9aa1a1195536bd900f5f417b18",
+         "class": "File",
+         "location": "Hello.class",
+         "size": 184
+     }
+  tool: integration/1st-workflow/1st-workflow.cwl
+  job: integration/1st-workflow/1st-workflow-job.yml
+  doc: Writing Workflows
+
+# case 20 - subworkflow
+- output:
+    "count_output": 16
+  tool: integration/count-lines8-wf/count-lines8-wf.cwl
+  job: integration/count-lines8-wf/wc-job.json
+  doc: Subworkflow from conformance test
+
+# case 21 - subworkflow
+- output:
+    "count_output": 16
+  tool: integration/count-lines10-wf/count-lines10-wf.cwl
+  job: integration/count-lines10-wf/wc-job.json
+  doc: Another subworkflow from conformance test
+
+# case 22 - subworkflow
+- output:
+    "classout": {
+        "basename": "Hello.class",
+        "checksum": "sha1$36478d3310a80ef7a3f1a7d91d258ec51dcc08ad",
+        "size": 419,
+        "class": "File"
+    }
+  tool: integration/nestedworkflows/nestedworkflows.cwl
+  doc: Example subworkflow from CWL user guide

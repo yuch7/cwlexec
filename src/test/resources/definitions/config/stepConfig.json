@@ -1,0 +1,20 @@
+{
+    "queue": "testQQ",
+    "project": "testPP",
+    "res_req": "flow_res",
+    "app": "flow_app",
+    "steps": {
+        "step1": {
+            "queue": "test",
+            "project": "testProject",
+            "rerunnable": true,
+            "app": "app",
+            "res_req": "docker",
+            "post-failure-script": {
+                "script": "/path/to/recoverscript.sh",
+                "timeout": 5,
+                "retry": 1
+            }
+        }
+    }
+}

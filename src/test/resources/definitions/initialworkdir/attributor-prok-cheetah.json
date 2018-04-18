@@ -1,0 +1,43 @@
+{
+    "source_gff3": {
+        "class": "File",
+        "location": "source_gff3.data"
+    },
+    "m8_files": [
+        {
+            "class": "File",
+            "location": "m8_1.data"
+        },
+        {
+            "class": "File",
+            "location": "m8_2.data"
+        }
+    ],
+    "hmm_attribute_lookup_file": {
+        "class": "File",
+        "location": "hmm_attr.data"
+    },
+    "config_file": "test.config",
+    "hmm_files": [
+        {
+            "class": "File",
+            "location": "hmm.data"
+        }
+    ],
+    "output_format": "json",
+    "blast_attribute_lookup_file": {
+        "class": "File",
+        "location": "blast.data"
+    },
+    "tmhmm_files": [
+        {
+            "class": "File",
+            "location": "tmhmm.data"
+        }
+    ],
+    "output_base": "outputbase",
+    "polypeptide_fasta": {
+        "class": "File",
+        "location": "ploy.fasta"
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "fasta_path": [
+        {
+            "class": "File",
+            "location": "../secondaryfiles/files/ref.fasta"
+        },
+        {
+            "class": "File",
+            "location": "../secondaryfiles/files/ref2.fasta"
+        }
+    ]
+}

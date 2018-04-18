@@ -1,0 +1,11 @@
+{
+    "steps": {
+        "post_failure-wf": {
+            "post-failure-script": {
+                "script": "${INTEGRATION_POSTFAILURE_HOME}/post.sh",
+                "retry": 10,
+                "timeout": 30
+            }
+        }
+    }
+}

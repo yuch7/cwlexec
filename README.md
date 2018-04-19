@@ -35,7 +35,7 @@ cwlexec [options] workflow-description-location [input-settings-location]
 You can build the package from source. Make sure that you have Maven installed
 
 ```
-git clone https://github.ibm.com/platformcomputing/cwl-engine.git # Clone cwlexec repo
+git clone https://github.com/IBMSpectrumComputing/cwlexec.git # Clone cwlexec repo
 cd cwlexec         # Switch to source directory
 mvn package        # build package
 ```
@@ -370,7 +370,7 @@ The execution sequence of a CWL workflow is as follows:
 9. After the main workflow receives the step exit event, the workflow is exited, and all of waiting steps are killed (`bkill`), but running jobs will continue to run.
 
 ## Community Contribution Requirement
-Community contributions to this repository must follow the [IBM Developer's Certificate of Origin (DCO)](https://github.ibm.com/platformcomputing/cwl-engine/blob/master/IBMDCO.md) process, and only through GitHub Pull Requests:
+Community contributions to this repository must follow the [IBM Developer's Certificate of Origin (DCO)](https://github.com/IBMSpectrumComputing/cwlexec/blob/master/IBMDCO.md) process, and only through GitHub Pull Requests:
 
  1. Contributor proposes new code to the community.
 

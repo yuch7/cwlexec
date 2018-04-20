@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.ibm.spectrumcomputing.cwl.exec.service.CWLExecService;
 import com.ibm.spectrumcomputing.cwl.exec.service.CWLServiceFactory;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
+import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandUtil;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.persistence.CWLMainProcessRecord;
 import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
@@ -110,42 +111,48 @@ public class CWLExecLauncher {
     protected Options getCommandOptions() {
         Options cmdOptions = new Options();
         Option help = new Option("h", "help", false, ResourceLoader.getMessage("cwl.command.help.option"));
-        optionIndex.put(help, 1);
+        int index = 1;
+        optionIndex.put(help, Integer.valueOf(index));
         cmdOptions.addOption(help);
         Option workdir = Option.builder("w").longOpt("workdir").hasArg().argName("workDir")
                 .desc(ResourceLoader.getMessage("cwl.command.workdir.option", DEFAULT_WORKDIR.toString()))
                 .build();
-        optionIndex.put(workdir, 2);
+        optionIndex.put(workdir, Integer.valueOf(++index));
         cmdOptions.addOption(workdir);
         Option outdir = Option.builder("o").longOpt("outdir").hasArg().argName("outputsDir")
                 .desc(ResourceLoader.getMessage("cwl.command.output.option", DEFAULT_OUTDIR.toString()))
                 .build();
-        optionIndex.put(outdir, 3);
+        optionIndex.put(outdir, Integer.valueOf(++index));
         cmdOptions.addOption(outdir);
         Option execConfig = Option.builder("c").longOpt("exec-config").hasArg().argName("configPath")
                 .desc(ResourceLoader.getMessage("cwl.command.config.option")).build();
-        optionIndex.put(execConfig, 4);
+        optionIndex.put(execConfig, Integer.valueOf(++index));
         cmdOptions.addOption(execConfig);
+        Option link = new Option("L", "link", false, ResourceLoader.getMessage("cwl.command.linkinput.option"));
+        optionIndex.put(link, Integer.valueOf(++index));
+        cmdOptions.addOption(link);
+        Option preserveEntireEnv = new Option("p", "preserve-entire-environment",
+                false,
+                ResourceLoader.getMessage("cwl.command.preserve.all.env.option"));
+        optionIndex.put(preserveEntireEnv, Integer.valueOf(++index));
+        cmdOptions.addOption(preserveEntireEnv);
         Option rerun = Option.builder("r").longOpt("rerun").hasArg().argName("workflowId")
                 .desc(ResourceLoader.getMessage("cwl.command.rerun.option")).build();
-        optionIndex.put(rerun, 5);
+        optionIndex.put(rerun, Integer.valueOf(++index));
         cmdOptions.addOption(rerun);
         Option quiet = new Option("q", "quiet", false, ResourceLoader.getMessage("cwl.command.quiet.option"));
-        optionIndex.put(quiet, 6);
+        optionIndex.put(quiet, Integer.valueOf(++index));
         cmdOptions.addOption(quiet);
         Option debug = new Option("X", "debug", false, ResourceLoader.getMessage("cwl.command.logger.option"));
-        optionIndex.put(debug, 7);
+        optionIndex.put(debug, Integer.valueOf(++index));
         cmdOptions.addOption(debug);
         Option list = Option.builder("l").longOpt("list").hasArg(false).argName("workflowId")
                 .desc(ResourceLoader.getMessage("cwl.command.list.option")).build();
-        optionIndex.put(list, 8);
+        optionIndex.put(list, Integer.valueOf(++index));
         cmdOptions.addOption(list);
         Option version = new Option("v", "version", false, ResourceLoader.getMessage("cwl.command.version.option"));
-        optionIndex.put(version, 9);
+        optionIndex.put(version, Integer.valueOf(++index));
         cmdOptions.addOption(version);
-        Option link = new Option("L", "link", false, ResourceLoader.getMessage("cwl.command.linkinput.option"));
-        optionIndex.put(link, 10);
-        cmdOptions.addOption(link);
         return cmdOptions;
     }
 
@@ -183,6 +190,9 @@ public class CWLExecLauncher {
         }
         if (commandLine.hasOption("L")) {
             System.setProperty(IOUtil.USING_SYMBOL_LINK, "True");
+        }
+        if (commandLine.hasOption("p")) {
+            System.setProperty(CommandUtil.PRESERVE_ENTIRE_ENV, "True");
         }
         if (System.getProperty(IOUtil.WORK_TOP_DIR) == null) {
             System.setProperty(IOUtil.WORK_TOP_DIR, mkDefaultWorkDir());

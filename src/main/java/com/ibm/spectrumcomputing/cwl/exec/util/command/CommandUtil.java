@@ -71,6 +71,8 @@ public final class CommandUtil {
     private CommandUtil() {
     }
 
+    public static final String PRESERVE_ENTIRE_ENV = "preserve.entire.env";
+
     /**
      * Builds a CWL UNIX local execution command for a given CWL process instance
      * 

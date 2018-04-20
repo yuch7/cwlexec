@@ -22,6 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecConfUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandUtil;
@@ -41,6 +44,8 @@ import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
  * A LSF runtime command implementation
  */
 final class CWLLSFCommandServiceImpl implements CWLCommandService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CWLLSFCommandServiceImpl.class);
 
     @Override
     public List<String> buildCommand(CWLCommandInstance instance) throws CWLException {
@@ -68,6 +73,11 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
         commands.addAll(Arrays.asList("-e", "%J_err"));
         CWLInstance mainInstance = CWLExecUtil.findMainInstance(instance);
         List<String> envVars = new ArrayList<>();
+        if (System.getProperty(CommandUtil.PRESERVE_ENTIRE_ENV) != null &&
+                "True".equalsIgnoreCase(System.getProperty(CommandUtil.PRESERVE_ENTIRE_ENV))) {
+            logger.debug("Inherit all environment variables");
+            envVars.add("all");
+        }
         DockerRequirement dockerRequirement = CWLExecUtil.findRequirement(instance, DockerRequirement.class);
         //The TMPDIR will be set by docker run
         if (dockerRequirement == null) {

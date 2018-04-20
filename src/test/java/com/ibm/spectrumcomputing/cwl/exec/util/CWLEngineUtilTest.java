@@ -1,8 +1,10 @@
 package com.ibm.spectrumcomputing.cwl.exec.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,5 +41,14 @@ public class CWLEngineUtilTest extends CWLExecTestBase {
     @Test
     public void getRuntimeEnv() {
         assertEquals(RuntimeEnv.LSF, CWLExecUtil.getRuntimeEnv());
+    }
+
+    @Test
+    public void validateEnvvarName() {
+        assertFalse(CWLExecUtil.validateEnvvarName(""));
+        assertFalse(CWLExecUtil.validateEnvvarName("a=b"));
+        assertTrue(CWLExecUtil.validateEnvvarName("_"));
+        assertTrue(CWLExecUtil.validateEnvvarName("__a__"));
+        assertTrue(CWLExecUtil.validateEnvvarName("a_A"));
     }
 }

@@ -111,7 +111,8 @@ public final class CWLExecUtil {
     }
 
     /**
-     * Finds a requirement by a given class of a requirement on CWL main process scope
+     * Finds a requirement by a given class of a requirement on CWL main process
+     * scope
      * 
      * @param <T>
      *            A class of {@link Requirement}
@@ -269,6 +270,22 @@ public final class CWLExecUtil {
      */
     public static void formatPrint(String format, Object... args) {
         System.out.format(format, args);
+    }
+
+    /**
+     * Validate a envvar name
+     * 
+     * @param envvarName
+     *            A given ENVVAR name
+     * @return If the name is valid, return true
+     */
+    public static boolean validateEnvvarName(String envvarName) {
+        boolean result = false;
+        if (envvarName != null && envvarName.length() > 0) {
+            Matcher matcher = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$").matcher(envvarName);
+            result = matcher.find();
+        }
+        return result;
     }
 
     private static <T extends Requirement> T findRequirement(CWLInstance instance,

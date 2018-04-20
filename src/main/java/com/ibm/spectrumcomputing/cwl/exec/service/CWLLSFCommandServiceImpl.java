@@ -78,6 +78,10 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
             logger.debug("Inherit all environment variables");
             envVars.add("all");
         }
+        if (System.getProperty(CommandUtil.PRESERVE_ENV) != null) {
+            envVars.addAll(Arrays.asList(System.getProperty(CommandUtil.PRESERVE_ENV).split(",")));
+            logger.debug("Inherit vars: {}", envVars);
+        }
         DockerRequirement dockerRequirement = CWLExecUtil.findRequirement(instance, DockerRequirement.class);
         //The TMPDIR will be set by docker run
         if (dockerRequirement == null) {
@@ -90,7 +94,7 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
             }
         }
         if (!envVars.isEmpty()) {
-            commands.addAll(Arrays.asList("-env", String.join(", ", envVars)));
+            commands.addAll(Arrays.asList("-env", String.join(",", envVars)));
         }
         String app = addLSFOptionsFromExecConf(instance, commands);
         if (dockerRequirement != null) {

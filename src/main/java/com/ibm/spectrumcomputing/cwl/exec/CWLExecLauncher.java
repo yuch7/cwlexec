@@ -54,6 +54,8 @@ import ch.qos.logback.core.ConsoleAppender;
  */
 public class CWLExecLauncher {
 
+    private static final String COMMAND_NO_INPUT_MSG = "cwl.command.no.input";
+
     private static final Path DEFAULT_WORKDIR = Paths.get(System.getProperty("user.home"), "cwl-workdir");
     private static final Path DEFAULT_OUTDIR = Paths.get(System.getProperty("user.dir"));
     
@@ -104,6 +106,7 @@ public class CWLExecLauncher {
                 this.showHelp();
             }
         } else {
+            CWLExecUtil.printStderrMsg(ResourceLoader.getMessage(COMMAND_NO_INPUT_MSG));
             this.showHelp();
         }
     }
@@ -136,6 +139,11 @@ public class CWLExecLauncher {
                 ResourceLoader.getMessage("cwl.command.preserve.all.env.option"));
         optionIndex.put(preserveEntireEnv, Integer.valueOf(++index));
         cmdOptions.addOption(preserveEntireEnv);
+        Option preserveEnv = Option.builder("pe").longOpt("preserve-environment").hasArg().argName("envvarName")
+                .desc(ResourceLoader.getMessage("cwl.command.preserve.env.option"))
+                .build();
+        optionIndex.put(preserveEnv, Integer.valueOf(++index));
+        cmdOptions.addOption(preserveEnv);
         Option rerun = Option.builder("r").longOpt("rerun").hasArg().argName("workflowId")
                 .desc(ResourceLoader.getMessage("cwl.command.rerun.option")).build();
         optionIndex.put(rerun, Integer.valueOf(++index));
@@ -159,6 +167,10 @@ public class CWLExecLauncher {
     private CommandLine parseCommands(Options options, String[] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine = parser.parse(options, args);
+        if (commandLine.hasOption("p") && commandLine.hasOption("pe")) {
+            CWLExecUtil.printStderrMsg(ResourceLoader.getMessage("cwl.command.arg.not.allowed.with"));
+            showHelp();
+        }
         if (commandLine.hasOption("o")) {
             handleOutdirOption(commandLine);
         }
@@ -193,6 +205,9 @@ public class CWLExecLauncher {
         }
         if (commandLine.hasOption("p")) {
             System.setProperty(CommandUtil.PRESERVE_ENTIRE_ENV, "True");
+        }
+        if (commandLine.hasOption("pe")) {
+            handlePreserveOption(commandLine);
         }
         if (System.getProperty(IOUtil.WORK_TOP_DIR) == null) {
             System.setProperty(IOUtil.WORK_TOP_DIR, mkDefaultWorkDir());
@@ -250,6 +265,23 @@ public class CWLExecLauncher {
         this.execConfPath = confFile.getAbsolutePath();
     }
 
+    private void handlePreserveOption(CommandLine commandLine) {
+        String[] envs = commandLine.getOptionValues("pe");
+        if (envs != null) {
+            for (String env : envs) {
+                if (!CWLExecUtil.validateEnvvarName(env)) {
+                    CWLExecUtil.printStderrMsg(ResourceLoader.getMessage("cwl.envvar.name.invalid", env));
+                    System.exit(255);
+                }
+                if (System.getenv(env) == null) {
+                    CWLExecUtil.printStderrMsg(ResourceLoader.getMessage("cwl.envvar.not.found", env));
+                    System.exit(255);
+                }
+            }
+        }
+        System.setProperty(CommandUtil.PRESERVE_ENV, String.join(",", envs));
+    }
+
     private String mkDefaultWorkDir() {
         try {
             IOUtil.mkdirs(System.getProperty("user.name"), DEFAULT_WORKDIR);
@@ -301,6 +333,7 @@ public class CWLExecLauncher {
                     exitCode = engineService.submit(owner, argList.get(0), argList.get(1), this.execConfPath)
                             .getExitCode();
                 } else {
+                    CWLExecUtil.printStderrMsg(ResourceLoader.getMessage(COMMAND_NO_INPUT_MSG));
                     this.printHelp();
                 }
             } catch (CWLException ce) {
@@ -310,6 +343,7 @@ public class CWLExecLauncher {
                 CWLExecUtil.printStderrMsg(e.getMessage());
             }
         } else {
+            CWLExecUtil.printStderrMsg(ResourceLoader.getMessage(COMMAND_NO_INPUT_MSG));
             this.printHelp();
         }
         System.exit(exitCode);

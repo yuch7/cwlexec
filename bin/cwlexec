@@ -20,14 +20,23 @@
 LSF_LOWEST_VERSION="10.1.0.3"
 LSF_ID=`type lsid 2>/dev/null`
 if [ $? -eq 0 ]; then
-    LSF_VERSION=`$LSF_ID 2>&1 | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+"`
+    LSF_ID_OUT=`$LSF_ID 2>&1`
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \`lsid\`: $LSF_ID_OUT"
+        exit 1
+    fi
+    LSF_VERSION=`echo $LSF_ID_OUT | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+"`
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run lsid: "
+        exit 1
+    fi
     SORTED_LSF_VERSION=`echo "$LSF_VERSION $LSF_LOWEST_VERSION" | tr " " "\n" | sort -V | head -n 1`
     if [ "$SORTED_LSF_VERSION" != "$LSF_LOWEST_VERSION" ]; then
-        echo "The IBM Spectrum LSF version must be no less than 10.1.0.3"
+        echo "Error: The IBM Spectrum LSF version must be no less than 10.1.0.3"
         exit 1
     fi
 else
-    echo "An IBM Spectrum LSF (version >=10.1.0.3) runtime environment is required."
+    echo "Error: An IBM Spectrum LSF (version >=10.1.0.3) runtime environment is required."
     exit 1
 fi
 
@@ -39,14 +48,14 @@ if [ $? -eq 0 ]; then
 elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ];  then
     JAVA_BIN="$JAVA_HOME/bin/java"
 else
-    echo "A java (version >= $JAVA_LOWEST_VERSION) runtime environment is required."
+    echo "Error: A java (version >= $JAVA_LOWEST_VERSION) runtime environment is required."
     exit 1
 fi
 
 JAVA_VERSION=`"$JAVA_BIN" -version 2>&1 | awk -F '"' '/version/ {print $2}'`
 SORTED_JAVA_VERSION=`echo "$JAVA_VERSION $JAVA_LOWEST_VERSION" | tr " " "\n" | sort -V | head -n 1`
 if [ "$SORTED_JAVA_VERSION" != "$JAVA_LOWEST_VERSION" ]; then
-    echo "The java version must be no less than $JAVA_LOWEST_VERSION"
+    echo "Error: The java version must be no less than $JAVA_LOWEST_VERSION"
     exit 1
 fi
 

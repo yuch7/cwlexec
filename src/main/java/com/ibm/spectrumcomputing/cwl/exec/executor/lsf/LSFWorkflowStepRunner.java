@@ -17,18 +17,31 @@ package com.ibm.spectrumcomputing.cwl.exec.executor.lsf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ibm.spectrumcomputing.cwl.exec.service.CWLRuntimeService;
+import com.ibm.spectrumcomputing.cwl.exec.service.CWLServiceFactory;
+import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLInstanceDependencyResolver;
+import com.ibm.spectrumcomputing.cwl.exec.util.CWLStepBindingResolver;
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandStdIOEvaluator;
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.InputsEvaluator;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.WorkflowStepInput;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLFile;
+import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
+import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
 
 /*
  * Run a CWL Workflow step instance
@@ -42,6 +55,8 @@ final class LSFWorkflowStepRunner {
     private final List<String> expectDependencies = new ArrayList<>();
 
     private AtomicInteger actualDependencies = new AtomicInteger(0);
+
+    private final CWLRuntimeService runtimeService = CWLServiceFactory.getService(CWLRuntimeService.class);
 
     protected LSFWorkflowStepRunner(LSFWorkflowRunner main, CWLCommandInstance instance) throws CWLException {
         this.main = main;
@@ -89,9 +104,11 @@ final class LSFWorkflowStepRunner {
             // translate step names into step instance ids
             if (main.getInstance() instanceof CWLWorkflowInstance) {
                 CWLWorkflowInstance workflowInstance = (CWLWorkflowInstance) main.getInstance();
-                for (CWLInstance stepInstance : workflowInstance.getInstances()) {
-                    if (stepNames.contains(stepInstance.getName()))
-                        expectDependencies.add(stepInstance.getId());
+                addStepDependetents(stepNames, workflowInstance);
+                if (expectDependencies.isEmpty()) {
+                    //when rerun a flow, the dependent step may be done
+                    logger.debug("step ({}) dependents all done, ready to run");
+                    prepareStepCommand(instance);
                 }
             }
         }
@@ -119,5 +136,48 @@ final class LSFWorkflowStepRunner {
         return (expectDependencies.size() == 1) &&
                 (expectDependencies.get(0).equals(instanceId)) &&
                 (this.getInstance().getId().equals(instanceId));
+    }
+
+    private void addStepDependetents(Set<String> stepNames, CWLWorkflowInstance workflowInstance) {
+        for (CWLInstance stepInstance : workflowInstance.getInstances()) {
+            if (stepNames.contains(stepInstance.getName())) {
+                if (stepInstance.getState() == CWLInstanceState.DONE) {
+                    //when rerun a flow, the dependent step may be done
+                    logger.debug("dependent step ({}) is alreay done, don't wait it.", stepInstance.getName());
+                } else {
+                    expectDependencies.add(stepInstance.getId());
+                }
+            }
+        }
+    }
+
+    private void prepareStepCommand(CWLCommandInstance instance) throws CWLException {
+        WorkflowStep instStep = instance.getStep();
+        List<WorkflowStepInput> in = instStep.getIn();
+        for (WorkflowStepInput stepInput : in) {
+            CWLStepBindingResolver.resolveStepInput(instance, instStep, stepInput);
+        }
+        CommandLineTool commandLineTool = (CommandLineTool) instStep.getRun();
+        InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
+        Map<String, String> runtime = instance.getRuntime();
+        List<CommandInputParameter> inputs = commandLineTool.getInputs();
+        InputsEvaluator.eval(jsReq, runtime, inputs);
+        // print the value of inputs
+        for (CommandInputParameter parameter : inputs) {
+            Object value = parameter.getValue();
+            if (value == null) {
+                value = parameter.getDefaultValue();
+            }
+            if (value != null && value instanceof CWLFile) {
+                value = ((CWLFile) value).getPath();
+            }
+            logger.debug("Resolve input ({}) of step ({}) to <{}>", parameter.getId(), instance.getName(), value);
+        }
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdin());
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStderr());
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdout());
+        instance.setReadyToRun(true);
+        List<String> commands = runtimeService.buildRuntimeCommand(instance);
+        instance.setCommands(commands);
     }
 }

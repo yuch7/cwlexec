@@ -169,13 +169,13 @@ public final class IOUtil {
         if (scriptPath != null) {
             File scriptFile = scriptPath.toFile();
             if (scriptFile.setExecutable(true)) {
-                logger.debug("Set file executable attribute.");
+                logger.trace("Set file executable attribute.");
             }
             if (scriptFile.setReadable(true)) {
-                logger.debug("Set file readable attribute.");
+                logger.trace("Set file readable attribute.");
             }
             if (scriptFile.setWritable(true)) {
-                logger.debug("Set file writable attribute.");
+                logger.trace("Set file writable attribute.");
             }
             if (command != null) {
                 write(scriptFile, command);

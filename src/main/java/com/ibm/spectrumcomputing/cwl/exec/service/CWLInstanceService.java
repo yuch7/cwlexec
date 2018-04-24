@@ -15,6 +15,7 @@
  */
 package com.ibm.spectrumcomputing.cwl.exec.service;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -51,7 +52,6 @@ import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.Workflow;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
 import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
-import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /**
@@ -182,8 +182,9 @@ public final class CWLInstanceService {
             record.setMainId(processObj.getMainId());
             session.save(record);
             instance = buildMainInstance(record, processObj, flowExecConf, false);
-            record.setOutputsDir(instance.getRuntime().get(CommonUtil.RUNTIME_OUTPUT_DIR));
-            record.setWorkDir(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR));
+            record.setOutputsDir(Paths.get(
+                    System.getProperty(IOUtil.OUTPUT_TOP_DIR), record.getName() + "-" + record.getId()).toString());
+            record.setWorkDir(Paths.get(System.getProperty(IOUtil.WORK_TOP_DIR), record.getId()).toString());
             transaction.commit();
         } catch (CWLException e) {
             transaction.rollback();
@@ -363,12 +364,19 @@ public final class CWLInstanceService {
                 stepInstance.setState(CWLInstanceState.WAITING);
             } else if (record.getState() != CWLInstanceState.WAITING) {
                 CWLInstanceState state = LSFCommandUtil.findLSFJobState(record.getHpcJobId());
-                logger.debug("Query the step {} ({}) state (current={}, lsf={}) from LSF",
-                        record.getId(), record.getName(), record.getState(), state);
+                logger.debug("Query the step ({}) state from LSF (current={}, lsf={})",
+                        record.getName(), record.getState(), state);
                 if (state == CWLInstanceState.DONE) {
-                    OutputsCapturer.captureCommandOutputs((CWLCommandInstance) stepInstance);
-                    stepInstance.setState(CWLInstanceState.DONE);
-                    updateCWLProcessInstance(stepInstance);
+                    try {
+                        OutputsCapturer.captureCommandOutputs((CWLCommandInstance) stepInstance);
+                        stepInstance.setState(CWLInstanceState.DONE);
+                        //Only persist done step, for other cases, just modify the runtime state
+                        updateCWLProcessInstance(stepInstance);
+                    } catch (CWLException e) {
+                        //The step is done, but cannot capture outputs
+                        logger.debug("Failed to capture the output for done step ({})", record.getName());
+                        stepInstance.setState(CWLInstanceState.WAITING);
+                    }
                 } else if (state == CWLInstanceState.EXITED) {
                     stepInstance.setState(CWLInstanceState.WAITING);
                 } else {
@@ -379,7 +387,7 @@ public final class CWLInstanceService {
                 }
             }
         }
-        logger.debug("recover step: {}, {}, {}", stepInstance.getName(), stepInstance.getState(), prepared);
+        logger.debug("recover step: {}, state={}, prepared={}", stepInstance.getName(), stepInstance.getState(), prepared);
     }
 
     private CWLInstance buildStepInstance(CWLWorkflowInstance parent,

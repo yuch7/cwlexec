@@ -429,8 +429,8 @@ public class CWLExecLauncher {
         CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.work.dir"), wfRecord.getWorkDir());
         CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.output.dir"), wfRecord.getOutputsDir());
         CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.desc.path"), wfRecord.getDescPath());
-        CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.input.settings"),
-                wfRecord.getInputsPath());
+        CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.input.settings"), wfRecord.getInputsPath());
+        CWLExecUtil.formatPrint(columnFormat, ResourceLoader.getMessage("cwl.command.column.exec.configuration"), wfRecord.getExecConfPath());
     }
 
 

@@ -62,7 +62,14 @@ fi
 # Run cwlexec-*.jar
 if [ -z "$CWL_EXEC_HOME" ]; then
     if [ -L "$0" ]; then
-        CWL_EXEC_PATH=`realpath $0`
+        if [ `command -v realpath` ]; then
+            CWL_EXEC_PATH=`realpath $0`
+        elif [ `command -v readlink` ]; then
+            CWL_EXEC_PATH=`readlink -e $0`
+        else
+            echo "Error: Unable to resolve full path to cwlexec."
+            exit 1
+        fi  
     else
         CWL_EXEC_PATH="$0" 
     fi

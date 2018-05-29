@@ -88,7 +88,7 @@ public class OutputsCapturer {
         List<CommandOutputParameter> outputs = commandLineTool.getOutputs();
         for (CommandOutputParameter output : outputs) {
             CommandOutputBinding outputBinding = output.getOutputBinding();
-            CommandOutputBindingEvaluator.evalGlob(jsReq, inputs, outputBinding);
+            CommandOutputBindingEvaluator.evalGlob(jsReq, inputs, outputBinding, instance.getScatter() != null);
             ParameterType outputParamType = output.getType();
             if (outputParamType.getType() != null) {
                 captureCommandOutputsByType(jsReq, instance, output);
@@ -410,6 +410,18 @@ public class OutputsCapturer {
                 scatterOutputBinding.setGlob(glob);
                 scatterOutputBinding.setOutputEval(outputBinding.getOutputEval());
                 scatterOutputBinding.setLoadContents(outputBinding.isLoadContents());
+                if (outputType.getSymbol() != CWLTypeSymbol.ARRAY &&
+                        (glob.getGlobExpr().getValue() != null && glob.getGlobExpr().getValue().contains("*"))) {
+                    ParameterType outputElementType = new ParameterType();
+                    outputElementType.setType(outputType);
+                    return findOutputValue(owner,
+                            globDir,
+                            instance.getHPCJobId(),
+                            jsReq,
+                            inputs,
+                            new OutputArrayType(outputElementType),
+                            scatterOutputBinding);
+                }
                 Object value = findOutputValue(owner,
                         globDir,
                         instance.getHPCJobId(),

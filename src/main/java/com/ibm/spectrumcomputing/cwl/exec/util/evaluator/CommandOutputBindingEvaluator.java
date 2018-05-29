@@ -53,7 +53,8 @@ public final class CommandOutputBindingEvaluator {
      */
     public static void evalGlob(InlineJavascriptRequirement jsRequirement,
             List<CommandInputParameter> inputs,
-            CommandOutputBinding outputBinding) throws CWLException {
+            CommandOutputBinding outputBinding,
+            boolean scatter) throws CWLException {
         if (outputBinding != null) {
             OutputBindingGlob glob = outputBinding.getGlob();
             if (glob != null && glob.getGlobExpr() != null) {
@@ -61,6 +62,14 @@ public final class CommandOutputBindingEvaluator {
                 if (globExpr != null) {
                     List<String> context = JSEvaluator.constructEvalContext(jsRequirement);
                     context.add(JSEvaluator.toInputsContext(inputs));
+                    if (scatter &&
+                            inputs.size() == 1 &&
+                            inputs.get(0).getType().getType().getSymbol() != CWLTypeSymbol.ARRAY &&
+                            inputs.get(0).getValue() instanceof List) {
+                        glob.getGlobExpr().setValue(globExpr.replaceAll(
+                                "\\$\\([^\\(\\)]*(\\(.*?\\)[^\\(\\)]*)*\\)\\s*[, ]*", "*"));
+                        return;
+                    }
                     JSResultWrapper r = JSEvaluator.evaluate(context, globExpr);
                     if (r.isString()) {
                         glob.getGlobExpr().setValue(r.asString());

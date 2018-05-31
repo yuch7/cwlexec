@@ -16,6 +16,8 @@
 package com.ibm.spectrumcomputing.cwl.exec;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -340,7 +342,13 @@ public class CWLExecLauncher {
                 CWLExecUtil.printStderrMsg(ce.getMessage());
                 exitCode = ce.getExceptionCode();
             } catch (Exception e) {
-                CWLExecUtil.printStderrMsg(e.getMessage());
+                String errMsg = e.getMessage();
+                if (errMsg == null || errMsg.length() == 0) {
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    errMsg = ResourceLoader.getMessage("cwl.unexpected.exception", sw.toString());
+                }
+                CWLExecUtil.printStderrMsg(errMsg);
             }
         } else {
             CWLExecUtil.printStderrMsg(ResourceLoader.getMessage(COMMAND_NO_INPUT_MSG));

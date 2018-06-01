@@ -60,19 +60,18 @@ public class CWLRuntimeService {
     }
 
     /**
-     * Builds a list of runtime environment dependent commands for a CWL scatter step
+     * Builds the runtime environment dependent commands for a CWL scatter step
      * instance
      * 
      * @param commandInstance
      *            A CWL scatter step instance
-     * @return The list of scatter commands
      * @throws CWLException
      *             Failed to build the commands
      */
-    public List<List<String>> buildRuntimeScatterCommands(CWLCommandInstance commandInstance) throws CWLException {
+    public void buildRuntimeScatterCommands(CWLCommandInstance commandInstance) throws CWLException {
         RuntimeEnv runtimeEnv = commandInstance.getRuntimeEnv();
         CWLCommandService processService = CWLServiceFactory.getCommandService(runtimeEnv);
-        return processService.buildScatterCommand(commandInstance);
+        processService.buildScatterCommand(commandInstance);
     }
 
     /*

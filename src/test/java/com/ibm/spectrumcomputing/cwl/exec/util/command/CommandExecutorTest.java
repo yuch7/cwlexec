@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.ibm.spectrumcomputing.cwl.CWLExecTestBase;
 import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandExecutionResult;
 import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandExecutor;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 
 public class CommandExecutorTest extends CWLExecTestBase {
 
@@ -84,12 +85,14 @@ public class CommandExecutorTest extends CWLExecTestBase {
     @Test
     public void runScatterCommands() {
         if (!is_win) {
-            List<List<String>> scatterCommands = new ArrayList<>();
+            List<CWLScatterHolder> scatterHolders = new ArrayList<>();
             for (int i = 0; i < 4; i++) {
                 List<String> commands = Arrays.asList("echo", "test", String.valueOf(i));
-                scatterCommands.add(commands);
+                CWLScatterHolder scatterHolder = new CWLScatterHolder();
+                scatterHolder.setCommand(commands);
+                scatterHolders.add(scatterHolder);
             }
-            List<CommandExecutionResult> results = CommandExecutor.runScatter(scatterCommands);
+            List<CommandExecutionResult> results = CommandExecutor.runScatter(scatterHolders);
             assertEquals("test 0", results.get(0).getOutMsg());
             assertEquals("test 1", results.get(1).getOutMsg());
             assertEquals("test 2", results.get(2).getOutMsg());

@@ -15,6 +15,7 @@
  */
 package com.ibm.spectrumcomputing.cwl.exec.service;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import com.ibm.spectrumcomputing.cwl.model.conf.FlowExecConf;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.DockerRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.EnvVarRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.EnvironmentDef;
@@ -53,22 +55,35 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
         if (instance.isReadyToRun()) {
             baseCommands = CommandUtil.buildCommand(instance);
         }
-        return buildCommand(instance, baseCommands);
+        return buildCommand(instance, baseCommands, 0);
     }
 
     @Override
-    public List<List<String>> buildScatterCommand(CWLCommandInstance instance) throws CWLException {
-        List<List<String>> totalCommands = new ArrayList<>();
-        for (List<String> commands : CommandUtil.buildScatterCommand(instance)) {
-            totalCommands.add(buildCommand(instance, commands));
+    public void buildScatterCommand(CWLCommandInstance instance) throws CWLException {
+        CommandUtil.buildScatterCommand(instance);
+        for (CWLScatterHolder scatterHolder : instance.getScatterHolders()) {
+            List<String> srcCommand = scatterHolder.getCommand();
+            logger.debug("scatter - source command: {}", srcCommand);
+            List<String> lsfCommand = buildCommand(instance, srcCommand, scatterHolder.getScatterIndex());
+            logger.debug("scatter - lsf command: {}", lsfCommand);
+            //update the command
+            scatterHolder.setCommand(lsfCommand);
         }
-        return totalCommands;
     }
 
-    private List<String> buildCommand(CWLCommandInstance instance, List<String> baseCommands) throws CWLException {
+    private List<String> buildCommand(CWLCommandInstance instance, List<String> baseCommands, int scatterIndex)
+            throws CWLException {
         List<String> commands = new ArrayList<>();
         commands.add("bsub");
-        commands.addAll(Arrays.asList("-cwd", instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR)));
+        if (scatterIndex > 0) {
+            String scatterWorkDir = instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR)
+                    + File.separator
+                    + String.format("scatter%d", scatterIndex);
+            IOUtil.mkdirs(instance.getOwner(), Paths.get(scatterWorkDir));
+            commands.addAll(Arrays.asList("-cwd", scatterWorkDir));
+        } else {
+            commands.addAll(Arrays.asList("-cwd", instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR)));
+        }
         commands.addAll(Arrays.asList("-o", "%J_out"));
         commands.addAll(Arrays.asList("-e", "%J_err"));
         CWLInstance mainInstance = CWLExecUtil.findMainInstance(instance);

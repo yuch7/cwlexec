@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /**
@@ -220,45 +221,45 @@ public class CommandExecutor {
     /**
      * Execute scatter commands
      *
-     * @param commands
-     *            The scatter commands
+     * @param scatterHolders
+     *            The scatter holders that contains the scatter command
      * @return The command execution result
      */
-    public static List<CommandExecutionResult> runScatter(List<List<String>> commands) {
-        return runScatter(commands, null, null);
+    public static List<CommandExecutionResult> runScatter(List<CWLScatterHolder> scatterHolders) {
+        return runScatter(scatterHolders, null, null);
     }
 
     /**
      * Execute scatter commands with specified execution environment
      *
-     * @param commands
-     *            The scatter commands
+     * @param scatterHolders
+     *            The scatter holders that contains the scatter command
      * @param customerEnv
      *            The specified execution environment
      * @return The command execution result
      */
-    public static List<CommandExecutionResult> runScatter(List<List<String>> commands,
+    public static List<CommandExecutionResult> runScatter(List<CWLScatterHolder> scatterHolders,
             Map<String, String> customerEnv) {
-        return runScatter(commands, customerEnv, null);
+        return runScatter(scatterHolders, customerEnv, null);
     }
 
     /**
      * Execute scatter commands with specified execution environment and working
      * directory
      * 
-     * @param commands
-     *            The scatter commands
+     * @param scatterHolders
+     *            The scatter holders that contains the scatter command
      * @param customerEnv
      *            The specified execution environment
      * @param workDir
      *            The specified command working directory
      * @return The command execution result
      */
-    public static List<CommandExecutionResult> runScatter(List<List<String>> commands,
+    public static List<CommandExecutionResult> runScatter(List<CWLScatterHolder> scatterHolders,
             Map<String, String> customerEnv,
             Path workDir) {
         ForkJoinPool forkJoinPool = new ForkJoinPool();
-        ScatterTotalCommandTask task = new ScatterTotalCommandTask(commands, customerEnv, workDir);
+        ScatterTotalCommandTask task = new ScatterTotalCommandTask(scatterHolders, customerEnv, workDir);
         return forkJoinPool.invoke(task);
     }
 }

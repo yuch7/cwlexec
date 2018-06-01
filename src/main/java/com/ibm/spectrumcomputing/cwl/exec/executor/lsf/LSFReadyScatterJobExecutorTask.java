@@ -24,6 +24,7 @@ import com.ibm.spectrumcomputing.cwl.exec.util.command.LSFCommandUtil;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,13 +104,13 @@ class LSFReadyScatterJobExecutorTask implements Runnable {
             // scatter the step and submit scattered jobs
             CWLExecUtil.printScatterTip(instance);
             int scatterIndex = 1;
-            for (List<String> scatterCommands : instance.getScatterCommands()) {
+            for (CWLScatterHolder scatterHolder : instance.getScatterHolders()) {
                 String history = ResourceLoader.getMessage("cwl.exec.scatter.job.start", instance.getName(),
-                        scatterIndex, CWLExecUtil.asPrettyCommandStr(scatterCommands));
+                        scatterIndex, CWLExecUtil.asPrettyCommandStr(scatterHolder.getCommand()));
                 logger.info(history);
                 scatterIndex = scatterIndex + 1;
             }
-            List<CommandExecutionResult> resultList = CommandExecutor.runScatter(instance.getScatterCommands());
+            List<CommandExecutionResult> resultList = CommandExecutor.runScatter(instance.getScatterHolders());
             List<String> waitJobs = new ArrayList<>();
             scatterIndex = 1;
             for (CommandExecutionResult result : resultList) {
@@ -130,8 +131,8 @@ class LSFReadyScatterJobExecutorTask implements Runnable {
             // start to wait scattered jobs, after waited, gather the wait
             // result and build a gather job
             int waitCode = 0;
-            List<CommandExecutionResult> waitResults = CommandExecutor
-                    .runScatter(LSFCommandUtil.pageWaitCommands(waitJobs));
+            List<CommandExecutionResult> waitResults = CommandExecutor.runScatter(
+                    LSFCommandUtil.pageWaitCommands(waitJobs));
             for (CommandExecutionResult result : waitResults) {
                 if (result.getExitCode() != 0) {
                     logger.debug(ResourceLoader.getMessage("cwl.exec.job.bwait.failed", result.getExitCode(),

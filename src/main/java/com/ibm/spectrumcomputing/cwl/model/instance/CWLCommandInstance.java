@@ -36,11 +36,10 @@ public class CWLCommandInstance extends CWLInstance {
     private List<String> commands;
     private CommandExecutionResult executionResult;
 
-    private List<List<String>> scatterCommands;
-    private List<CommandExecutionResult> scatterExecutionResult;
     private boolean emptyScatter;
     private List<String> scatter;
     private ScatterMethod scatterMethod;
+    private List<CWLScatterHolder> scatterHolders;
 
     /**
      * Constructs a CWL CommandLineTool instance if the corresponding process is
@@ -143,46 +142,6 @@ public class CWLCommandInstance extends CWLInstance {
     }
 
     /**
-     * If this instance needs to scatter, returns the list of scatter commands
-     * 
-     * @return The list of scatter commands
-     */
-    public List<List<String>> getScatterCommands() {
-        return scatterCommands;
-    }
-
-    /**
-     * If this instance needs to scatter, sets the list of scatter commands
-     * 
-     * @param scatterCommands
-     *            The list of scatter commands
-     */
-    public void setScatterCommands(List<List<String>> scatterCommands) {
-        this.scatterCommands = scatterCommands;
-    }
-
-    /**
-     * If this instance needs to scatter, returns the list of the scatter
-     * commands execution result
-     * 
-     * @return The list of the scatter commands execution result
-     */
-    public List<CommandExecutionResult> getScatterExecutionResult() {
-        return scatterExecutionResult;
-    }
-
-    /**
-     * After this instance was scattered, sets the command execution result for
-     * this instance
-     * 
-     * @param executionResult
-     *            The list of the scatter commands execution result
-     */
-    public void setScatterExecutionResult(List<CommandExecutionResult> executionResult) {
-        this.scatterExecutionResult = executionResult;
-    }
-
-    /**
      * If this instance needs to scatter, returns the list of the scatter
      * 
      * @return The list of the scatter
@@ -237,5 +196,24 @@ public class CWLCommandInstance extends CWLInstance {
      */
     public void setEmptyScatter(boolean emptyScatter) {
         this.emptyScatter = emptyScatter;
+    }
+
+    /**
+     * If this instance needs to scatter, returns the list of scatter holders
+     * 
+     * @return The list of scatter holders
+     */
+    public List<CWLScatterHolder> getScatterHolders() {
+        return scatterHolders;
+    }
+
+    /**
+     * If this instance needs to scatter, sets the list of scatter holders
+     * 
+     * @param scatterHolders
+     *            The list of scatter holders
+     */
+    public void setScatterHolders(List<CWLScatterHolder> scatterHolders) {
+        this.scatterHolders = scatterHolders;
     }
 }

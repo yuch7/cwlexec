@@ -88,7 +88,9 @@ public class OutputsCapturer {
         List<CommandOutputParameter> outputs = commandLineTool.getOutputs();
         for (CommandOutputParameter output : outputs) {
             CommandOutputBinding outputBinding = output.getOutputBinding();
-            CommandOutputBindingEvaluator.evalGlob(jsReq, inputs, outputBinding, instance.getScatter() != null);
+            if (instance.getScatter() == null) {
+                CommandOutputBindingEvaluator.evalGlob(jsReq, inputs, outputBinding);
+            }
             ParameterType outputParamType = output.getType();
             if (outputParamType.getType() != null) {
                 captureCommandOutputsByType(jsReq, instance, output);
@@ -213,9 +215,7 @@ public class OutputsCapturer {
             }
             try {
                 if (instance.getScatter() != null) {
-                    int arraySize = instance.getScatterCommands().size();
-                    boolean emptyScatter = instance.isEmptyScatter();
-                    value = findScatterOutputValue(jsReq, instance, outputType, output, arraySize, 0, emptyScatter);
+                    value = findScatterOutputValue(jsReq, instance, outputType, output, 0);
                 } else {
                     value = findOutputValue(owner, tmpOutputDir, instance.getHPCJobId(), jsReq, inputs, outputType,
                             outputBinding);
@@ -244,7 +244,7 @@ public class OutputsCapturer {
             CommandOutputParameter output) throws CWLException {
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         List<CommandInputParameter> inputs = commandLineTool.getInputs();
-        int scatterSize = instance.getScatterCommands().size();
+        int scatterSize = instance.getScatterHolders().size();
         int groupSize = 0;
         if (instance.getStep().getScatterMethod() == ScatterMethod.NESTED_CROSSPRODUCT) {
             String firstId = instance.getScatter().get(0);
@@ -258,8 +258,7 @@ public class OutputsCapturer {
                 }
             }
         }
-        boolean emptyScatter = instance.isEmptyScatter();
-        return findScatterOutputValue(jsReq, instance, outputType, output, scatterSize, groupSize, emptyScatter);
+        return findScatterOutputValue(jsReq, instance, outputType, output, groupSize);
     }
 
     private static Object findOutputValue(String owner,
@@ -385,14 +384,11 @@ public class OutputsCapturer {
             CWLCommandInstance instance,
             CWLType outputType,
             CommandOutputParameter output,
-            int scatterSize,
-            int groupSize,
-            boolean emptyScatter) throws CWLException {
+            int groupSize) throws CWLException {
+        int scatterSize = instance.getScatterHolders().size();
+        boolean emptyScatter = instance.isEmptyScatter();
         String owner = instance.getOwner();
-        Path globDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR));
-        CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         CommandOutputBinding outputBinding = output.getOutputBinding();
-        List<CommandInputParameter> inputs = commandLineTool.getInputs();
         List<Object> valueList = new ArrayList<>();
         List<Object> groupList = new ArrayList<>();
         int length = 0;
@@ -400,6 +396,8 @@ public class OutputsCapturer {
             addEmptyScatter(valueList, scatterSize, groupSize);
         } else {
             for (int i = 1; i <= scatterSize; i++) {
+                List<CommandInputParameter> inputs = instance.getScatterHolders().get(i-1).getInputs();
+                CommandOutputBindingEvaluator.evalGlob(jsReq, inputs, outputBinding);
                 CommandOutputBinding scatterOutputBinding = new CommandOutputBinding();
                 OutputBindingGlob glob = new OutputBindingGlob();
                 glob.setPatterns(outputBinding.getGlob().getPatterns());
@@ -410,18 +408,8 @@ public class OutputsCapturer {
                 scatterOutputBinding.setGlob(glob);
                 scatterOutputBinding.setOutputEval(outputBinding.getOutputEval());
                 scatterOutputBinding.setLoadContents(outputBinding.isLoadContents());
-                if (outputType.getSymbol() != CWLTypeSymbol.ARRAY &&
-                        (glob.getGlobExpr().getValue() != null && glob.getGlobExpr().getValue().contains("*"))) {
-                    ParameterType outputElementType = new ParameterType();
-                    outputElementType.setType(outputType);
-                    return findOutputValue(owner,
-                            globDir,
-                            instance.getHPCJobId(),
-                            jsReq,
-                            inputs,
-                            new OutputArrayType(outputElementType),
-                            scatterOutputBinding);
-                }
+                Path globDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), String.format("scatter%d", i));
+                logger.debug("Glob scatter job output in {}", globDir);
                 Object value = findOutputValue(owner,
                         globDir,
                         instance.getHPCJobId(),
@@ -441,7 +429,8 @@ public class OutputsCapturer {
                 }
             }
         }
-        writeScatterValues(globDir, outputBinding, valueList);
+        Path outputDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR));
+        writeScatterValues(outputDir, outputBinding, valueList);
         return valueList;
     }
 

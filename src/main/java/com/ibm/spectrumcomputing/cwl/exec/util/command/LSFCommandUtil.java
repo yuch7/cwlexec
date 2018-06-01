@@ -28,6 +28,7 @@ import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.DockerRequirement;
 import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
@@ -48,11 +49,11 @@ public class LSFCommandUtil {
      * 
      * @param waitJobs
      *            the wait jobs
-     * @return the bwait commands
+     * @return the bwait commands that is in scatter holder
      */
-    public static List<List<String>> pageWaitCommands(List<String> waitJobs) {
+    public static List<CWLScatterHolder> pageWaitCommands(List<String> waitJobs) {
         int pageLimits = 100;
-        List<List<String>> waitJobPages = new ArrayList<>();
+        List<CWLScatterHolder> scatterHolders = new ArrayList<>();
         if (waitJobs != null) {
             int nGroup = waitJobs.size() / pageLimits;
             int start = 0;
@@ -64,17 +65,21 @@ public class LSFCommandUtil {
                 List<String> waitCommand = Arrays.asList("bwait", "-w", String.join(" && ", listPage));
                 logger.info(ResourceLoader.getMessage("cwl.exec.job.start.wait",
                         CWLExecUtil.asPrettyCommandStr(waitCommand)));
-                waitJobPages.add(waitCommand);
+                CWLScatterHolder scatterHolder = new CWLScatterHolder();
+                scatterHolder.setCommand(waitCommand);
+                scatterHolders.add(scatterHolder);
             }
             if (end < waitJobs.size()) {
                 List<String> listPage = waitJobs.subList(end, waitJobs.size());
                 List<String> waitCommand = Arrays.asList("bwait", "-w", String.join(" && ", listPage));
                 logger.info(ResourceLoader.getMessage("cwl.exec.job.start.wait",
                         CWLExecUtil.asPrettyCommandStr(waitCommand)));
-                waitJobPages.add(waitCommand);
+                CWLScatterHolder scatterHolder = new CWLScatterHolder();
+                scatterHolder.setCommand(waitCommand);
+                scatterHolders.add(scatterHolder);
             }
         }
-        return waitJobPages;
+        return scatterHolders;
     }
 
     /**

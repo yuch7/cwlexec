@@ -45,6 +45,7 @@ import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.WorkflowStepInput;
@@ -277,6 +278,8 @@ final class LSFBwaitExecutorTask implements Runnable {
             // are done, we bsub a
             // placeholder job (just exit the scatter exit code) to represent
             // the scatter step
+            instance.setScatterHolders(new ArrayList<>());
+            buildScatterCommands(instance);
             createScatterResultGatherStep(instance);
         } else {
             fillOutPlaceholderStep(instance);
@@ -386,18 +389,17 @@ final class LSFBwaitExecutorTask implements Runnable {
     }
 
     private void createScatterResultGatherStep(CWLCommandInstance instance) throws CWLException {
-        List<List<String>> commandsList = buildScatterCommands(instance);
-        instance.setScatterCommands(commandsList);
         // Scatter a single job to scatter jobs and submit them
         CWLExecUtil.printScatterTip(instance);
         int scatterIndex = 1;
-        for (List<String> scatterCommands : instance.getScatterCommands()) {
+        for (CWLScatterHolder scatterHolder : instance.getScatterHolders()) {
+            List<String> scatterCommands = scatterHolder.getCommand();
             String history = ResourceLoader.getMessage("cwl.exec.scatter.job.start", instance.getName(),
                     scatterIndex, CWLExecUtil.asPrettyCommandStr(scatterCommands));
             logger.info(history);
             scatterIndex = scatterIndex + 1;
         }
-        List<CommandExecutionResult> resultList = CommandExecutor.runScatter(instance.getScatterCommands());
+        List<CommandExecutionResult> resultList = CommandExecutor.runScatter(instance.getScatterHolders());
         List<String> waitJobs = new ArrayList<>();
         scatterIndex = 1;
         for (CommandExecutionResult result : resultList) {
@@ -469,22 +471,14 @@ final class LSFBwaitExecutorTask implements Runnable {
         return commands;
     }
 
-    private List<List<String>> buildScatterCommands(CWLCommandInstance instance) throws CWLException {
+    private void buildScatterCommands(CWLCommandInstance instance) throws CWLException {
         WorkflowStep instStep = instance.getStep();
         List<WorkflowStepInput> in = instStep.getIn();
         for (WorkflowStepInput stepInput : in) {
             CWLStepBindingResolver.resolveStepInput(instance, instStep, stepInput);
         }
-        CommandLineTool commandLineTool = (CommandLineTool) instStep.getRun();
-        InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
-        Map<String, String> runtime = instance.getRuntime();
-        List<CommandInputParameter> inputs = commandLineTool.getInputs();
-        InputsEvaluator.eval(jsReq, runtime, inputs);
-        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdin());
-        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStderr());
-        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdout());
         instance.setReadyToRun(true);
-        return runtimeService.buildRuntimeScatterCommands(instance);
+        runtimeService.buildRuntimeScatterCommands(instance);
     }
 
     private int findLSFJobExitCode(long jobId) {

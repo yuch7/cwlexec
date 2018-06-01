@@ -39,14 +39,13 @@ interface CWLCommandService {
     public List<String> buildCommand(CWLCommandInstance instance) throws CWLException;
 
     /**
-     * Depends on specific runtime environment to build a list of execution commands for
+     * Depends on specific runtime environment to build the execution commands for
      * a CWL scatter step
      *
      * @param instance
      *            A CWL scatter step instance
-     * @return A list of execution commands
      * @throws CWLException
      *             Failed to build scatter command
      */
-    public List<List<String>> buildScatterCommand(CWLCommandInstance instance) throws CWLException;
+    public void buildScatterCommand(CWLCommandInstance instance) throws CWLException;
 }

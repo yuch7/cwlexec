@@ -34,10 +34,13 @@ import org.slf4j.LoggerFactory;
 
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandLineBindingEvaluator;
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandStdIOEvaluator;
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.InputsEvaluator;
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.RequirementsEvaluator;
 import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLTypeSymbol;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.binding.CommandLineBinding;
@@ -95,12 +98,10 @@ public final class CommandUtil {
      * 
      * @param instance
      *            A CWL scatter process instance
-     * @return An UNIX execution command
      * @throws CWLException
      *             Fail to build the command
      */
-    public static List<List<String>> buildScatterCommand(CWLCommandInstance instance) throws CWLException {
-        List<List<String>> totalCommands = new ArrayList<>();
+    public static void buildScatterCommand(CWLCommandInstance instance) throws CWLException {
         List<List<CommandInputParameter>> scatterInputs = scatterInputs(instance);
         if (scatterInputs.isEmpty()) {
             instance.setEmptyScatter(true);
@@ -123,14 +124,23 @@ public final class CommandUtil {
                 }
             }
             totalInputs.addAll(scatterInputs.get(i));
-            totalCommands.add(buildCommand(instance, totalInputs, i + 1));
+            CWLScatterHolder scatterHolder = new CWLScatterHolder();
+            InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
+            Map<String, String> runtime = instance.getRuntime();
+            InputsEvaluator.eval(jsReq, runtime, totalInputs);
+            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdin());
+            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStderr());
+            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdout());
+            scatterHolder.setScatterIndex(i + 1);
+            scatterHolder.setInputs(totalInputs);
+            scatterHolder.setCommand(buildCommand(instance, totalInputs, scatterHolder.getScatterIndex()));
+            instance.getScatterHolders().add(scatterHolder);
         }
-        return totalCommands;
     }
 
     private static List<String> buildCommand(CWLCommandInstance instance,
             List<CommandInputParameter> inputs,
-            int outputIndex) throws CWLException {
+            int scatterIndex) throws CWLException {
         List<String> commands = new ArrayList<>();
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         List<String> baseCommand = commandLineTool.getBaseCommand();
@@ -163,7 +173,7 @@ public final class CommandUtil {
             commands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, commands);
             logger.debug("Has DockerRequirement, build commands as:\n{}", commands);
         }
-        String stdout = buildCommandOut(instance, outputIndex);
+        String stdout = buildCommandOut(instance, scatterIndex);
         if (stdout != null && !commands.isEmpty()) {
             int last = commands.size() - 1;
             commands.set(last, String.format("%s %s", commands.get(last), stdout));
@@ -196,9 +206,9 @@ public final class CommandUtil {
      * Builds stdout and stderr for a specified CWL instance, a stdout (>stdout)
      * or stdout (2>stderr) or both (>stdout 2>stderr) will be return
      */
-    private static String buildCommandOut(CWLCommandInstance instance, int outputIndex) throws CWLException {
+    private static String buildCommandOut(CWLCommandInstance instance, int scatterIndex) throws CWLException {
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
-        String outputRedirection = buildStdout(instance, commandLineTool, outputIndex);
+        String outputRedirection = buildStdout(instance, commandLineTool, scatterIndex);
         CWLFieldValue stderrExpr = commandLineTool.getStderr();
         if (stderrExpr != null) {
             String stderr = stderrExpr.getValue();
@@ -965,16 +975,16 @@ public final class CommandUtil {
         return stdinLocation;
     }
 
-    private static String buildStdout(CWLCommandInstance instance, CommandLineTool commandLineTool, int outputIndex)
+    private static String buildStdout(CWLCommandInstance instance, CommandLineTool commandLineTool, int scatterIndex)
             throws CWLException {
         CWLFieldValue stdoutExpr = commandLineTool.getStdout();
         String outputRedirection = null;
         if (stdoutExpr != null) {
             String stdout = stdoutExpr.getValue();
             if (stdout != null) {
-                if (outputIndex > 0) {
+                if (scatterIndex > 0) {
                     // scatter job
-                    stdout += "_" + outputIndex;
+                    stdout = String.format("scatter%d", scatterIndex) + File.separator + stdout;
                 }
                 Path stdoutPath = Paths.get(stdout);
                 Path stdoutParentPath = stdoutPath.getParent();
@@ -1110,9 +1120,8 @@ public final class CommandUtil {
                 if (in.getValue() == null) {
                     values = (List<String>) in.getDefaultValue();
                 }
-                int index = 0;
                 for (Object value : values) {
-                    CommandInputParameter parameter = new CommandInputParameter(scatterId + "_" + ++index);
+                    CommandInputParameter parameter = new CommandInputParameter(scatterId);
                     parameter.setValue(value);
                     parameter.setInputBinding(((CommandInputParameter) in).getInputBinding());
                     parameter.setType(in.getType());

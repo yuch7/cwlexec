@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RecursiveTask;
 
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
+
 /*
  * A scatter command task, fork the scatter jobs, then join them
  */
@@ -29,13 +31,13 @@ final class ScatterTotalCommandTask extends RecursiveTask<List<CommandExecutionR
 
     private static final long serialVersionUID = 1L;
 
-    private final List<List<String>> totalCommands;
+    private final List<CWLScatterHolder> scatterHolders;
     private final Map<String, String> envVars;
     private final String workdir;
 
-    protected ScatterTotalCommandTask(List<List<String>> totalCommands, Map<String, String> envVars, Path workdir) {
+    protected ScatterTotalCommandTask(List<CWLScatterHolder> scatterHolders, Map<String, String> envVars, Path workdir) {
         super();
-        this.totalCommands = totalCommands;
+        this.scatterHolders = scatterHolders;
         this.envVars = envVars;
         if (workdir != null) {
             this.workdir = workdir.toString();
@@ -48,12 +50,13 @@ final class ScatterTotalCommandTask extends RecursiveTask<List<CommandExecutionR
     protected List<CommandExecutionResult> compute() {
         List<CommandExecutionResult> results = new ArrayList<>();
         List<RecursiveTask<CommandExecutionResult>> forks = new ArrayList<>();
-        for (List<String> commands : totalCommands) {
+        for (CWLScatterHolder scatterHolder : scatterHolders) {
             Path wordirPath = null;
             if (this.workdir != null) {
                 wordirPath = Paths.get(this.workdir);
             }
-            ScatterSingleCommandTask task = new ScatterSingleCommandTask(commands, envVars, wordirPath);
+            List<String> command = scatterHolder.getCommand();
+            ScatterSingleCommandTask task = new ScatterSingleCommandTask(command, envVars, wordirPath);
             forks.add(task);
             task.fork();
         }

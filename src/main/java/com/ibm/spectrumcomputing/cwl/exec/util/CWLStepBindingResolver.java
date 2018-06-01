@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.StepInValueFromEvaluator;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
@@ -184,10 +185,16 @@ public class CWLStepBindingResolver {
                 runInputParam.setValue(sourceValues);
             } else if (!sourceValues.isEmpty()) {
                 Object value = sourceValues.get(0);
-                if (value instanceof List<?> &&
-                        (runInputParam.getType().getType() != null &&
-                            runInputParam.getType().getType().getSymbol() != CWLTypeSymbol.ARRAY)) {
-                        value = ((List<?>) value).get(0);
+                boolean isScatterStep = false;
+                if (stepInstance instanceof CWLCommandInstance && ((CWLCommandInstance) stepInstance).getScatter() != null) {
+                    isScatterStep = true;
+                }
+                if (!isScatterStep) {
+                    if (value instanceof List<?> &&
+                            (runInputParam.getType().getType() != null &&
+                                runInputParam.getType().getType().getSymbol() != CWLTypeSymbol.ARRAY)) {
+                            value = ((List<?>) value).get(0);
+                    }
                 }
                 runInputParam.setValue(value);
             }

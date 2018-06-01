@@ -224,7 +224,7 @@ public final class CWLExecUtil {
      */
     public static void printScatterTip(CWLCommandInstance instance) {
         if (instance != null && instance.getScatter() != null) {
-            int scatterSize = instance.getScatterCommands().size();
+            int scatterSize = instance.getScatterHolders().size();
             if (instance.getScatterMethod() != null) {
                 String scatterMethodName = instance.getScatterMethod().toString().toLowerCase();
                 logger.info(ResourceLoader.getMessage("cwl.exec.scatter.job.scatter", instance.getName(), scatterSize,

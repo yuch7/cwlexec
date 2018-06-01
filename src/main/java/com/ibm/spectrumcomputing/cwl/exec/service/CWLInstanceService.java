@@ -404,7 +404,8 @@ public final class CWLInstanceService {
         RequirementsEvaluator.evalStepEnvVarReq(jsReq, runtime, step);
         if (step.getRun() instanceof CommandLineTool) {
             CommandLineTool commandLineTool = (CommandLineTool) step.getRun();
-            if (prepared) {
+            //For scatter step, postpone the evaluation phase until building command
+            if (prepared && step.getScatter() == null) {
                 List<CommandInputParameter> inputs = commandLineTool.getInputs();
                 InputsEvaluator.eval(jsReq, runtime, inputs);
                 CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdin());
@@ -422,8 +423,8 @@ public final class CWLInstanceService {
             if (prepared) {
                 instance.setReadyToRun(true);
                 if (((CWLCommandInstance) instance).getScatter() != null) {
-                    ((CWLCommandInstance) instance).setScatterCommands(
-                            runtimeService.buildRuntimeScatterCommands((CWLCommandInstance) instance));
+                    ((CWLCommandInstance) instance).setScatterHolders(new ArrayList<>());
+                    runtimeService.buildRuntimeScatterCommands((CWLCommandInstance) instance);
                 } else {
                     ((CWLCommandInstance) instance).setCommands(
                             runtimeService.buildRuntimeCommand((CWLCommandInstance) instance));

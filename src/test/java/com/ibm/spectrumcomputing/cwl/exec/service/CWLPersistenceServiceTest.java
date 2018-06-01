@@ -206,10 +206,11 @@ public class CWLPersistenceServiceTest extends CWLExecTestBase {
         CWLWorkflowInstance instance = (CWLWorkflowInstance) persistenceService.createMainInstance(owner, processObj, null);
         CWLCommandInstance stepInstance = (CWLCommandInstance) instance.getInstances().get(0);
         stepInstance.setRuntime((instance.getRuntime()));
-        List<List<String>> commands = CommandUtil.buildScatterCommand((CWLCommandInstance) instance.getInstances().get(0));
-        assertEquals(2, commands.size());
-        assertTrue(String.join(" ", commands.get(0)).startsWith("echo -n foo one three"));
-        assertTrue(String.join(" ", commands.get(1)).startsWith("echo -n foo two four"));
+        CWLCommandInstance commandInstance = (CWLCommandInstance) instance.getInstances().get(0);
+        CommandUtil.buildScatterCommand(commandInstance);
+        assertEquals(2, commandInstance.getScatterHolders().size());
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(0).getCommand()).startsWith("echo -n foo one three"));
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(1).getCommand()).startsWith("echo -n foo two four"));
     }
 
     @Test
@@ -223,12 +224,13 @@ public class CWLPersistenceServiceTest extends CWLExecTestBase {
         CWLWorkflowInstance instance = (CWLWorkflowInstance) persistenceService.createMainInstance(owner, processObj, null);
         CWLCommandInstance stepInstance = (CWLCommandInstance) instance.getInstances().get(0);
         stepInstance.setRuntime((instance.getRuntime()));
-        List<List<String>> commands = CommandUtil.buildScatterCommand((CWLCommandInstance) instance.getInstances().get(0));
-        assertEquals(4, commands.size());
-        assertTrue(String.join(" ", commands.get(0)).startsWith("echo -n foo one three"));
-        assertTrue(String.join(" ", commands.get(1)).startsWith("echo -n foo one four"));
-        assertTrue(String.join(" ", commands.get(2)).startsWith("echo -n foo two three"));
-        assertTrue(String.join(" ", commands.get(3)).startsWith("echo -n foo two four"));
+        CWLCommandInstance commandInstance = (CWLCommandInstance) instance.getInstances().get(0);
+        CommandUtil.buildScatterCommand(commandInstance);
+        assertEquals(4, commandInstance.getScatterHolders().size());
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(0).getCommand()).startsWith("echo -n foo one three"));
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(1).getCommand()).startsWith("echo -n foo one four"));
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(2).getCommand()).startsWith("echo -n foo two three"));
+        assertTrue(String.join(" ", commandInstance.getScatterHolders().get(3).getCommand()).startsWith("echo -n foo two four"));
     }
 
     @Test

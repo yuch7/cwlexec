@@ -1423,3 +1423,14 @@
   }
   tool: v1.0/valueFrom-constant.cwl
   doc: Test valueFrom with constant value overriding provided array inputs
+
+- job: v1.0/dynresreq-dir-job.yaml
+  tool: v1.0/dynresreq-dir.cwl
+  doc: Test dynamic resource reqs referencing the size of Files inside a Directory
+  output:
+     output: {
+        "location": "cores.txt",
+        "size": 2,
+        "class": "File",
+        "checksum": "sha1$7448d8798a4380162d4b56f9b452e2f6f9e24e7a"
+     }

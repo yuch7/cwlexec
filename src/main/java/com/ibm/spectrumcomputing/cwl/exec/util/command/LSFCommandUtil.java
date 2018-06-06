@@ -24,9 +24,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecConfUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
+import com.ibm.spectrumcomputing.cwl.model.conf.FlowExecConf;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.DockerRequirement;
@@ -156,6 +159,28 @@ public class LSFCommandUtil {
             logger.debug("Prepare LSF docker run as\n{}", CWLExecUtil.asPrettyCommandStr(commands));
         }
         return commands;
+    }
+
+    /**
+     * After scatter jobs were executed by LSF, builds a wait job for them
+     * 
+     * @param instance
+     *            The instance for a scatter step
+     * @param waitCode
+     *            The exited code for scatter jobs
+     * @return A bsub command used to wait the scatter jobs
+     */
+    public static List<String> buildScatterWaitJobCommmand(CWLCommandInstance instance, int waitCode) {
+        List<String> bsub = new ArrayList<>();
+        bsub.add("bsub");
+        CWLInstance main = CWLExecUtil.findMainInstance(instance);
+        FlowExecConf flowExecConf = main.getFlowExecConf();
+        String queue = CWLExecConfUtil.getQueue(flowExecConf, instance.getName());
+        if (queue != null && queue.length() > 0) {
+            bsub.addAll(Arrays.asList("-q", queue));
+        }
+        bsub.add("exit " + waitCode);
+        return bsub;
     }
 
     private static List<String> prepareLSFDockerByApp(DockerRequirement dockerReq,

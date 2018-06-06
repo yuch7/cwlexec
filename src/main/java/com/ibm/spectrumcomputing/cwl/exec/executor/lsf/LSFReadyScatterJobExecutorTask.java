@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -99,7 +98,7 @@ class LSFReadyScatterJobExecutorTask implements Runnable {
         List<String> bsub = null;
         if (instance.isEmptyScatter()) {
             logger.debug("Job ({}) scattering over empty input", instance.getName());
-            bsub = Arrays.asList("bsub", "exit 0");
+            bsub = LSFCommandUtil.buildScatterWaitJobCommmand(instance, 0);
         } else {
             // scatter the step and submit scattered jobs
             CWLExecUtil.printScatterTip(instance);
@@ -144,9 +143,7 @@ class LSFReadyScatterJobExecutorTask implements Runnable {
                     break;
                 }
             }
-            bsub = new ArrayList<>();
-            bsub.add("bsub");
-            bsub.add("exit " + waitCode);
+            bsub = LSFCommandUtil.buildScatterWaitJobCommmand(instance, waitCode);
         }
         return bsub;
     }

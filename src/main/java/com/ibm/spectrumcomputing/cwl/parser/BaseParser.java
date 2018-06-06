@@ -641,8 +641,8 @@ class BaseParser {
         CWLDirectory dir = null;
         if (dirNode.isObject()) {
             dir = new CWLDirectory();
-            setCWLFileBase(parentPath, id, dir, dirNode);
             JsonNode listingNode = dirNode.get("listing");
+            setCWLDirBase(parentPath, id, dir, dirNode, listingNode);
             List<CWLFileBase> listing = new ArrayList<>();
             if (listingNode != null && listingNode.isArray()) {
                 Path path = Paths.get(dir.getPath());
@@ -881,6 +881,37 @@ class BaseParser {
         cwlFile.setLocation(location);
         cwlFile.setPath(toPath(location, basename));
         return cwlFile;
+    }
+
+    private static CWLFileBase setCWLDirBase(String parentPath,
+            String id,
+            CWLFileBase cwlDir,
+            JsonNode dirNode,
+            JsonNode listingNode) throws CWLException {
+        // base name
+        String basename = processBaseName(dirNode.get("basename"));
+        cwlDir.setBasename(basename);
+        // local host path
+        Path path = processPath(parentPath, basename, id, dirNode.get("path"));
+        // an IRI location
+        String location = processLocation(parentPath, dirNode.get("location"));
+        if (location == null && path != null) {
+            location = path.toString();
+        }
+        if (location == null && listingNode != null) {
+            location = parentPath;
+        }
+        if (location == null) {
+            throw new CWLException(
+                    ResourceLoader.getMessage("cwl.parser.field.required.in", "path, location or listing", id), 251);
+        }
+        cwlDir.setLocation(location);
+        if (dirNode.get("location") == null && dirNode.get("path") == null) {
+            cwlDir.setPath(Paths.get(location).resolve(basename).toString());
+        } else {
+            cwlDir.setPath(toPath(location, basename));
+        }
+        return cwlDir;
     }
 
     private static String toPath(String location, String basename) {

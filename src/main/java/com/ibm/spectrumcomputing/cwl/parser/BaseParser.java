@@ -876,7 +876,7 @@ class BaseParser {
         }
         if (location == null) {
             throw new CWLException(
-                    ResourceLoader.getMessage(CWL_PARSER_FIELD_REQUIRED, "path, location or contents"), 251);
+                    ResourceLoader.getMessage("cwl.parser.field.required.in", "path, location or contents", id), 251);
         }
         cwlFile.setLocation(location);
         cwlFile.setPath(toPath(location, basename));

@@ -1037,69 +1037,86 @@ public final class CommandUtil {
         return scatterList;
     }
 
-    @SuppressWarnings("unchecked")
     private static void scatterByDotProduct(List<List<CommandInputParameter>> scatterInputs,
             List<CWLParameter> scatterList) throws CWLException {
+        // The scatterList is a multi-dimensional array, the value of this list should be a list
         int length = 0;
+        // Valid the inputs length and determine the final input length 
         for (CWLParameter scatter : scatterList) {
-            List<String> value = (List<String>) scatter.getValue();
+            Object value = scatter.getValue();
             if (value == null) {
-                value = (List<String>) scatter.getDefaultValue();
+                value = scatter.getDefaultValue();
             }
-            if (length != 0 && length != value.size()) {
-                throw new CWLException("scatter length error", 253);
-            }
-            length = value.size();
-        }
-        List<String> para = new ArrayList<>();
-        for (int i = 0; i < length; i++) {
-            para.clear();
-            for (CWLParameter scatter : scatterList) {
-                List<String> value = (List<String>) scatter.getValue();
-                if (value == null) {
-                    value = (List<String>) scatter.getDefaultValue();
+            if (value instanceof List) {
+                if (length != 0 && length != ((List<?>) value).size()) {
+                    throw new CWLException("The inputs length is not same when dotproduct a scatter inputs", 253);
                 }
-                para.add(value.get(i));
+                length = ((List<?>) value).size();
+            } else {
+                throw new CWLException("The value of scatter[dot] is not an array.", 253);
             }
-            CommandInputParameter parameter = new CommandInputParameter("scatterInput_" + i);
-            parameter.setValue(String.join(" ", para));
-            parameter.setInputBinding(((CommandInputParameter) scatterList.get(0)).getInputBinding());
-            parameter.setType(scatterList.get(0).getType());
+        }
+        for (int i = 0; i < length; i++) {
+            List<Object> dots = new ArrayList<>();
+            for (CWLParameter scatter : scatterList) {
+                Object value = scatter.getValue();
+                if (value == null) {
+                    value = scatter.getDefaultValue();
+                }
+                dots.add(((List<?>) value).get(i));
+            }
             List<CommandInputParameter> input = new ArrayList<>();
-            input.add(parameter);
+            int paramIndex = 0;
+            for (Object dot : dots) {
+                CWLParameter srcParameter = scatterList.get(paramIndex);
+                CommandInputParameter parameter = new CommandInputParameter(srcParameter.getId());
+                parameter.setInputBinding(((CommandInputParameter) srcParameter).getInputBinding());
+                parameter.setType(srcParameter.getType());
+                parameter.setValue(dot);
+                input.add(parameter);
+                paramIndex = paramIndex + 1;
+            }
             scatterInputs.add(input);
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static void scatterByCrossProduct(CWLCommandInstance instance,
             List<List<CommandInputParameter>> scatterInputs,
             List<CWLParameter> scatterList) {
-        List<List<String>> dimValue = new ArrayList<>();
+        //The dimValue is a two-dimensional array, the value of this list should be a list
+        List<Object> dimValue = new ArrayList<>();
         for (CWLParameter scatter : scatterList) {
-            List<String> value = (List<String>) scatter.getValue();
+            Object value = scatter.getValue();
             if (value == null) {
-                value = (List<String>) scatter.getDefaultValue();
+                value = scatter.getDefaultValue();
             }
             dimValue.add(value);
         }
-        for (List<String> values : dimValue) {
-            if (values.isEmpty()) {
+        for (Object values : dimValue) {
+            if (values instanceof List && ((List<?>)values).isEmpty()) {
                 instance.setEmptyScatter(true);
                 break;
             }
         }
-        List<List<String>> recursiveResult = new ArrayList<>();
-        cartesianProductRecursive(dimValue, recursiveResult, 0, new ArrayList<String>());
-        int i = 0;
-        for (List<String> result : recursiveResult) {
-            CommandInputParameter parameter = new CommandInputParameter("scatterInput_" + ++i);
-            parameter.setValue(String.join(" ", result));
-            parameter.setInputBinding(((CommandInputParameter) scatterList.get(0)).getInputBinding());
-            parameter.setType(scatterList.get(0).getType());
-            List<CommandInputParameter> input = new ArrayList<>();
-            input.add(parameter);
-            scatterInputs.add(input);
+        //The recursiveResult is a two-dimensional array, the value of this list should be a list
+        List<Object> recursiveResult = new ArrayList<>();
+        cartesianProductRecursive(dimValue, recursiveResult, 0, new ArrayList<Object>());
+        for (Object result : recursiveResult) {
+            if (result instanceof List) {
+                List<CommandInputParameter> input = new ArrayList<>();
+                int paramIndex = 0;
+                for (Object value : ((List<?>) result)) {
+                    CWLParameter srcParameter = scatterList.get(paramIndex);
+                    CommandInputParameter parameter = new CommandInputParameter(srcParameter.getId());
+                    parameter.setValue(value);
+                    CommandLineBinding parameterBinding = ((CommandInputParameter) srcParameter).getInputBinding();
+                    parameter.setInputBinding(parameterBinding);
+                    parameter.setType(srcParameter.getType());
+                    input.add(parameter);
+                    paramIndex = paramIndex + 1;
+                }
+                scatterInputs.add(input);
+            }
         }
     }
 
@@ -1134,28 +1151,36 @@ public final class CommandUtil {
         }
     }
 
-    private static void cartesianProductRecursive(List<List<String>> dimValue,
-            List<List<String>> result,
+    private static void cartesianProductRecursive(List<Object> dimValue,
+            List<Object> result,
             int layer,
-            List<String> curList) {
+            List<Object> curList) {
         if (layer < dimValue.size() - 1) {
-            if (dimValue.get(layer).isEmpty()) {
-                cartesianProductRecursive(dimValue, result, layer + 1, curList);
-            } else {
-                for (int i = 0; i < dimValue.get(layer).size(); i++) {
-                    List<String> list = new ArrayList<>(curList);
-                    list.add(dimValue.get(layer).get(i));
-                    cartesianProductRecursive(dimValue, result, layer + 1, list);
+            Object layerValue = dimValue.get(layer);
+            if (layerValue instanceof List) {
+                List<?> layerList = (List<?>) layerValue;
+                if (layerList.isEmpty()) {
+                    cartesianProductRecursive(dimValue, result, layer + 1, curList);
+                } else {
+                    for (int i = 0; i < layerList.size(); i++) {
+                        List<Object> list = new ArrayList<>(curList);
+                        list.add(layerList.get(i));
+                        cartesianProductRecursive(dimValue, result, layer + 1, list);
+                    }
                 }
             }
         } else if (layer == dimValue.size() - 1) {
-            if (dimValue.get(layer).isEmpty()) {
-                result.add(curList);
-            } else {
-                for (int i = 0; i < dimValue.get(layer).size(); i++) {
-                    List<String> list = new ArrayList<>(curList);
-                    list.add(dimValue.get(layer).get(i));
-                    result.add(list);
+            Object layerValue = dimValue.get(layer);
+            if (layerValue instanceof List) {
+                List<?> layerList = (List<?>) layerValue;
+                if (layerList.isEmpty()) {
+                    result.add(curList);
+                } else {
+                    for (int i = 0; i < layerList.size(); i++) {
+                        List<Object> list = new ArrayList<>(curList);
+                        list.add(layerList.get(i));
+                        result.add(list);
+                    }
                 }
             }
         }

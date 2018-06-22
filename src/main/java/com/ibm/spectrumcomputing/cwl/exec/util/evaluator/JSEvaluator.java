@@ -52,20 +52,27 @@ final class JSEvaluator {
         JSResultWrapper result = null;
         if (expr != null) {
             StringBuilder scriptBuilder = new StringBuilder();
-            scriptBuilder.append(paresExpressionLib(expressionLibs));
-            scriptBuilder.append(parseExpr(expr, expressionLibs));
-            String script = replaceLineSeparator(scriptBuilder.toString());
-            if (!script.isEmpty()) {
-                try {
-                    logger.debug("Evaluate js expression \"{}\" with context\n{}", expr, expressionLibs);
-                    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-                    result = new JSResultWrapper(engine.eval(script));
-                    logger.debug("Evaluated js expression \"{}\" to {}", expr, result);
-                } catch (ScriptException e) {
-                    throw new CWLException(
-                            ResourceLoader.getMessage("cwl.expression.evaluate.failed", expr, e.getMessage()),
-                            253);
+            scriptBuilder.append(buildExpressionLib(expressionLibs));
+            String singleExpr = buildSingleExpr(expr);
+            if (singleExpr != null) {
+                scriptBuilder.append(singleExpr);
+                String script = scriptBuilder.toString().trim();
+                if (!script.isEmpty()) {
+                    try {
+                        logger.debug("Evaluate js expression \"{}\" with context\n{}", expr, expressionLibs);
+                        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+                        result = new JSResultWrapper(engine.eval(script));
+                        logger.debug("Evaluated js expression \"{}\" to {}", expr, result);
+                    } catch (ScriptException e) {
+                        throw new CWLException(
+                                ResourceLoader.getMessage("cwl.expression.evaluate.failed", expr, e.getMessage()),
+                                253);
+                    }
                 }
+            } else {
+                //The expression is not a single expression, so the evaluated result should always be a string
+                result = new JSResultWrapper(evalScript(expressionLibs, expr.trim()).trim());
+                logger.debug("Evaluated script \"{}\" to {}", expr, result);
             }
         }
         return result;
@@ -109,7 +116,7 @@ final class JSEvaluator {
         return String.format("var self=%s;", CommonUtil.asJsonStr(obj));
     }
 
-    protected static String parsePlaceholder(String script, List<String> expressionLibs) throws CWLException {
+    private static String evalScript(List<String> expressionLibs, String script) throws CWLException {
         Pattern pattern = Pattern.compile("\\$\\([^\\(\\)]*(\\(.*?\\)[^\\(\\)]*)*\\)\\s*[, ]*");
         Matcher matcher = pattern.matcher(script);
         String express = null;
@@ -135,10 +142,10 @@ final class JSEvaluator {
             }
             script = script.replace(matcher.group(), value);
         }
-        return String.format("'%s'", script.replace("'", "\\'"));
+        return script;
     }
 
-    private static String paresExpressionLib(List<String> expressionLibs) {
+    private static String buildExpressionLib(List<String> expressionLibs) {
         StringBuilder script = new StringBuilder();
         if (expressionLibs != null) {
             for (String expressionLib : expressionLibs) {
@@ -152,9 +159,8 @@ final class JSEvaluator {
         return script.toString();
     }
 
-    private static String parseExpr(String expr, List<String> expressionLibs) throws CWLException {
-        String script = replaceLineSeparator(expr);
-
+     private static String buildSingleExpr(String expr) throws CWLException {
+        String script = expr.trim();
         if (script.startsWith("$") && (script.lastIndexOf("$(") == 0 || script.lastIndexOf("${") == 0)) {
             if (script.substring(1).startsWith("(") && script.substring(1).endsWith(")")) {
                 script = script.substring(2, script.length() - 1).trim();
@@ -164,15 +170,9 @@ final class JSEvaluator {
                 return script;
             } else if (script.substring(1).startsWith("{") && script.substring(1).endsWith("}")) {
                 return String.format("var __cwlfun=function(){%s}; __cwlfun();", script.substring(2, script.length() - 1));
-            } else {
-                return parsePlaceholder(script, expressionLibs);
             }
-        } else {
-            return parsePlaceholder(script, expressionLibs);
         }
+        return null;
     }
 
-    private static String replaceLineSeparator(String context) {
-        return context.replaceAll("\r", "").replaceAll("\n", "");
-    }
 }

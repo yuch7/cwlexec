@@ -599,6 +599,10 @@ public final class CommandUtil {
             needQuote = shellQuote;
         }
         if (needQuote && hasShellMetacharacters(arg)) {
+            //The arg has been quote by '
+            if (arg.startsWith("'") && arg.endsWith("'")) {
+                return quotedArg;
+            }
             quotedArg = String.format("\"%s\"", arg);
             logger.debug("Quote argument {} to {}", arg, quotedArg);
         }

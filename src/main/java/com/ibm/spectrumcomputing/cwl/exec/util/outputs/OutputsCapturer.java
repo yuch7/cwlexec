@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMetho
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLStepBindingResolver;
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandOutputBindingEvaluator;
@@ -173,7 +175,6 @@ public class OutputsCapturer {
             CommandOutputParameter output) throws CWLException {
         CWLType outputType = output.getType().getType();
         if (outputType.getSymbol() != CWLTypeSymbol.NULL) {
-            String owner = instance.getOwner();
             Path tmpOutputDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR));
             CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
             CommandOutputBinding outputBinding = output.getOutputBinding();
@@ -182,11 +183,11 @@ public class OutputsCapturer {
             if (instance.getScatter() != null) {
                 value = findScatterOuputValue(jsReq, instance, outputType, output);
             } else {
-                value = findOutputValue(owner,
-                        tmpOutputDir,
-                        instance.getHPCJobId(),
+                value = findOutputValue(tmpOutputDir,
+                        instance,
                         jsReq,
                         inputs,
+                        output.getId(),
                         outputType,
                         outputBinding);
             }
@@ -200,7 +201,6 @@ public class OutputsCapturer {
     private static void captureCommandOutputsByTypes(InlineJavascriptRequirement jsReq,
             CWLCommandInstance instance,
             CommandOutputParameter output) throws CWLException {
-        String owner = instance.getOwner();
         Path tmpOutputDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR));
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         CommandOutputBinding outputBinding = output.getOutputBinding();
@@ -217,8 +217,7 @@ public class OutputsCapturer {
                 if (instance.getScatter() != null) {
                     value = findScatterOutputValue(jsReq, instance, outputType, output, 0);
                 } else {
-                    value = findOutputValue(owner, tmpOutputDir, instance.getHPCJobId(), jsReq, inputs, outputType,
-                            outputBinding);
+                    value = findOutputValue(tmpOutputDir, instance, jsReq, inputs, output.getId(), outputType, outputBinding);
                 }
             } catch (CWLException e) {
                 // ignore, output is not mandatory validation
@@ -261,29 +260,30 @@ public class OutputsCapturer {
         return findScatterOutputValue(jsReq, instance, outputType, output, groupSize);
     }
 
-    private static Object findOutputValue(String owner,
-            Path globDir,
-            long jobId,
+    private static Object findOutputValue(Path globDir,
+            CWLCommandInstance instance,
             InlineJavascriptRequirement jsReq,
             List<CommandInputParameter> inputs,
-            CWLType type,
+            String outputId,
+            CWLType outputType,
             CommandOutputBinding outputBinding) throws CWLException {
+        long jobId = instance.getHPCJobId();
         List<CWLFileBase> globFiles = globFiles(jobId, globDir, outputBinding);
-        Object value = evalOutputEval(jsReq, inputs, globFiles, type, outputBinding);
+        Object value = evalOutputEval(jsReq, inputs, globFiles, outputType, outputBinding);
         if (value == null) {
             List<CWLFile> files = new ArrayList<>();
             List<CWLDirectory> dirs = new ArrayList<>();
             filterFilesAndDirs(globFiles, files, dirs);
-            CWLTypeSymbol typeSymbol = type.getSymbol();
+            CWLTypeSymbol typeSymbol = outputType.getSymbol();
             if (typeSymbol == CWLTypeSymbol.FILE) {
                 value = findCWLFile(globDir, toGlobPatterns(outputBinding), files);
             } else if (typeSymbol == CWLTypeSymbol.DIRECTORY) {
                 value = findCWLDir(globDir, toGlobPatterns(outputBinding), dirs);
             } else if (typeSymbol == CWLTypeSymbol.ARRAY) {
-                CWLTypeSymbol items = ((OutputArrayType) type).getItems().getType().getSymbol();
-                value = findArrayValue(items, files, dirs);
+                CWLTypeSymbol items = ((OutputArrayType) outputType).getItems().getType().getSymbol();
+                value = findArrayValue(globDir, instance, outputId, items, files, dirs);
             } else if (typeSymbol == CWLTypeSymbol.RECORD) {
-                OutputRecordType outputRecordType = (OutputRecordType) type;
+                OutputRecordType outputRecordType = (OutputRecordType) outputType;
                 List<OutputRecordField> records = outputRecordType.getFields();
                 List<OutputRecordField> recordValues = new ArrayList<>();
                 for (OutputRecordField record : records) {
@@ -291,17 +291,19 @@ public class OutputsCapturer {
                         OutputRecordField recordField = new OutputRecordField();
                         recordField.setName(record.getName());
                         recordField.setRecordType(record.getRecordType());
-                        recordField.setValue(findOutputValue(owner,
-                                globDir,
-                                jobId,
+                        recordField.setValue(findOutputValue(globDir,
+                                instance,
                                 jsReq,
                                 inputs,
+                                outputId,
                                 record.getRecordType().getType(),
                                 record.getOutputBinding()));
                         recordValues.add(recordField);
                     }
                 }
                 value = recordValues;
+            } else {
+                value = findValueFromCWLOutputJsonFile(globDir, instance, outputId, typeSymbol, false);
             }
         }
         return value;
@@ -370,13 +372,114 @@ public class OutputsCapturer {
         return cwlDir;
     }
 
-    private static Object findArrayValue(CWLTypeSymbol items, List<CWLFile> files, List<CWLDirectory> dirs) {
-        if (items == CWLTypeSymbol.FILE) {
+    private static Object findArrayValue(Path globDir,
+            CWLCommandInstance instance,
+            String outputId,
+            CWLTypeSymbol itemType,
+            List<CWLFile> files,
+            List<CWLDirectory> dirs) throws CWLException {
+        if (itemType == CWLTypeSymbol.FILE) {
             return files;
-        } else if (items == CWLTypeSymbol.DIRECTORY) {
+        } else if (itemType == CWLTypeSymbol.DIRECTORY) {
             return dirs;
         } else {
-            return new ArrayList<>();
+            Object value = findValueFromCWLOutputJsonFile(globDir, instance, outputId, itemType, true);
+            if (value == null) {
+                value = new ArrayList<>();
+            }
+            return value;
+        }
+    }
+
+    private static Object findValueFromCWLOutputJsonFile(Path globDir,
+            CWLCommandInstance instance,
+            String outputId,
+            CWLTypeSymbol outputType,
+            boolean fromArray) throws CWLException {
+        Object value = null;
+        Path cwlOutputJsonPath = globDir.resolve("cwl.output.json");
+        if (cwlOutputJsonPath.toFile().exists()) {
+            try {
+                JsonNode rootNode = CWLOutputJsonParser.parseCWLOutputJson(instance, cwlOutputJsonPath);
+                JsonNode fieldNode = rootNode.get(outputId);
+                if (fieldNode != null && fieldNode.isArray()) {
+                    if (fromArray) {
+                        value = toArrayValueByJson(outputType, fieldNode.elements());
+                    } else {
+                        value = toValueByJson(outputType, fieldNode);
+                    }
+                    if (value == null) {
+                        throw new CWLException(
+                                ResourceLoader.getMessage("cwl.output.value.not.found.bytype.from.json",
+                                        outputId, outputType, cwlOutputJsonPath),
+                                255);
+                    }
+                    return value;
+                } else {
+                    throw new CWLException(
+                            ResourceLoader.getMessage("cwl.output.value.not.found.from.json",
+                                    outputId, cwlOutputJsonPath),
+                            255);
+                }
+            } catch (CWLException | IOException e) {
+                throw new CWLException(
+                        ResourceLoader.getMessage("cwl.output.value.json.parse.error", cwlOutputJsonPath), 255);
+            }
+        }
+        return value;
+    }
+
+    private static Object toValueByJson(CWLTypeSymbol outputType, JsonNode jsonNode) {
+        switch (outputType) {
+        case STRING:
+            return jsonNode.asText();
+        case INT:
+            return jsonNode.asInt();
+        case FLOAT:
+            return jsonNode.floatValue();
+        case DOUBLE:
+            return jsonNode.asDouble();
+        case BOOLEAN:
+            return jsonNode.asBoolean();
+        default:
+            return null;
+        }
+    }
+
+    private static Object toArrayValueByJson(CWLTypeSymbol itemType, Iterator<JsonNode> elements) {
+        switch (itemType) {
+        case STRING:
+            List<String> strValues = new ArrayList<>();
+            while (elements.hasNext()) {
+                strValues.add(elements.next().asText());
+            }
+            return strValues;
+        case INT:
+            List<Integer> intValues = new ArrayList<>();
+            while (elements.hasNext()) {
+                intValues.add(elements.next().asInt());
+            }
+            return intValues;
+        case FLOAT:
+            List<Float> floatValues = new ArrayList<>();
+            while (elements.hasNext()) {
+                floatValues.add(elements.next().floatValue());
+            }
+            return floatValues;
+        case DOUBLE:
+            List<Double> doubleValues = new ArrayList<>();
+            while (elements.hasNext()) {
+                doubleValues.add(elements.next().asDouble());
+            }
+            return doubleValues;
+        case BOOLEAN:
+            List<Boolean> booleanValues = new ArrayList<>();
+            while (elements.hasNext()) {
+                booleanValues.add(elements.next().asBoolean());
+            }
+            return booleanValues;
+        default:
+            return null;
         }
     }
 
@@ -387,7 +490,6 @@ public class OutputsCapturer {
             int groupSize) throws CWLException {
         int scatterSize = instance.getScatterHolders().size();
         boolean emptyScatter = instance.isEmptyScatter();
-        String owner = instance.getOwner();
         CommandOutputBinding outputBinding = output.getOutputBinding();
         List<Object> valueList = new ArrayList<>();
         List<Object> groupList = new ArrayList<>();
@@ -410,13 +512,7 @@ public class OutputsCapturer {
                 scatterOutputBinding.setLoadContents(outputBinding.isLoadContents());
                 Path globDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), String.format("scatter%d", i));
                 logger.debug("Glob scatter job output in {}", globDir);
-                Object value = findOutputValue(owner,
-                        globDir,
-                        instance.getHPCJobId(),
-                        jsReq,
-                        inputs,
-                        outputType,
-                        scatterOutputBinding);
+                Object value = findOutputValue(globDir, instance, jsReq, inputs, output.getId(), outputType, scatterOutputBinding);
                 if (groupSize > 0) {
                     groupList.add(value);
                     length++;

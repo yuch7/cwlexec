@@ -371,11 +371,15 @@ final class LSFBwaitExecutorTask implements Runnable {
     }
 
     private void captureStepOutputs(CWLCommandInstance instance) throws CWLException {
-        Path cwlOutputJsonFile = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), "cwl.output.json");
-        if (!cwlOutputJsonFile.toFile().exists()) {
-            OutputsCapturer.captureCommandOutputs(instance);
+        if (this.terminated) {
+            Path cwlOutputJsonFile = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), "cwl.output.json");
+            if (!cwlOutputJsonFile.toFile().exists()) {
+                OutputsCapturer.captureCommandOutputs(instance);
+            } else {
+                logger.debug("The step ({}) has the cwl.output.json {}", instance.getName(), cwlOutputJsonFile);
+            }
         } else {
-            logger.debug("The step ({}) has the cwl.output.json {}", instance.getName(), cwlOutputJsonFile);
+            OutputsCapturer.captureCommandOutputs(instance);
         }
         logger.info(ResourceLoader.getMessage("cwl.exec.job.done",
                 instance.getName(),

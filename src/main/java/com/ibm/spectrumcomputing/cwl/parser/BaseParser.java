@@ -880,6 +880,8 @@ class BaseParser {
         }
         cwlFile.setLocation(location);
         cwlFile.setPath(toPath(location, basename));
+        // make sure basename has an exact value
+        resetBasename(cwlFile);
         return cwlFile;
     }
 
@@ -911,7 +913,15 @@ class BaseParser {
         } else {
             cwlDir.setPath(toPath(location, basename));
         }
+        // make sure basename has an exact value
+        resetBasename(cwlDir);
         return cwlDir;
+    }
+
+    private static void resetBasename(CWLFileBase cwlFileBase) {
+        if (cwlFileBase.getBasename() == null) {
+            cwlFileBase.setBasename(Paths.get(cwlFileBase.getPath()).getFileName().toString());
+        }
     }
 
     private static String toPath(String location, String basename) {

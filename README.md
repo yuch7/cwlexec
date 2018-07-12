@@ -273,22 +273,22 @@ cwlexec –c postscript.json workflow.cwl workflow-job.yml
 ```
 
 ###	List executed workflows
-The `cwlexec --list|-l` command lists all your submitted workflows information, and the `cwlexec --list|-l <workflow-id>` command displays a workflow information in detail.
+The `cwlexec --list|-l` command lists all your submitted workflow's information, and the `cwlexec --list|-l <workflow-id>` command displays a workflow information in detail.
 
 
-|Field	|Description|	
-|---|---|
-|ID	|	The unique identifier for this workflow|
-|Name		|The name of workflow|
-|Submit Time|		The time that the workflow is submitted	|
-|Start Time	|	The time that the workflow is started to execute|
-|End Time	|The time that the workflow is finished|
-|Exit State		|The workflow exit state, DONE or EXITED|
-|Exit Code		|0~255|
-|Working Directory	|The workflow work directory	|
-|Output Directory		|The workflow output directory	|
-|CWL File|		The path for workflow description file	|
-|Input Setting Files|	The path for workflow input settings file|
+|Field              |Description| 
+|-------------------|-----------|
+|ID                 | The unique identifier for this workflow |
+|Name               | The name of workflow |
+|Submit Time        | The time that the workflow is submitted |
+|Start Time         | The time that the workflow is started to execute |
+|End Time           | The time that the workflow is finished |
+|Exit State         | The workflow exit state, DONE or EXITED |
+|Exit Code          | 0~255 |
+|Working Directory  | The workflow work directory |
+|Output Directory   | The workflow output directory |
+|CWL File           | The path for workflow description file |
+|Input Setting Files| The path for workflow input settings file |
 
 ### Exit Code Definition
 If all steps of the workflow are done and the workflow is successful, the workflow exit code is 0. By default, if a workflow step exit code is 0 and its outputs match the output schema, the step was treated as done; otherwise the step is treated as exited.
@@ -299,16 +299,16 @@ If any step exits in a workflow, the workflow exits and the command exit code wi
 
 
 |Exit Code|Description|
-|-------   |---|
-|0	    |The workflow is done|
-|33|	There is an unsupported feature in the workflow|
-|130	|User used Ctrl + C to interupt the workflow|
-|250|	The workflow version is unsupported|
-|251|	Fail to parse workflow|
-|252|	Fail to load workflow inputs|
-|253|	Fail to evaluate the expression in workflow|
-|254|	Fail to capture the workflow/step output after the workflow/step is done|
-|255|	System exception. For example, command arguments are wrong; the CWL workflow description file cannot be found; bsub/bwait command cannot be found|
+|---------|-----------|
+| 0       | The workflow is done |
+| 33      | There is an unsupported feature in the workflow |
+| 130     | User used Ctrl + C to interupt the workflow |
+| 250     | The workflow version is unsupported |
+| 251     | Fail to parse workflow |
+| 252     | Fail to load workflow inputs |
+| 253     | Fail to evaluate the expression in workflow |
+| 254     | Fail to capture the workflow/step output after the workflow/step is done |
+| 255     | System exception. For example, command arguments are wrong; the CWL workflow description file cannot be found; bsub/bwait command cannot be found |
 
 ## Implementation
 Overview on how `cwlexec` is implemented
@@ -326,7 +326,8 @@ cwlexec includes three packages:
 
 The workflow work directory is used to store intermediate files of the workflow execution. It must be a shared directory for the LSF cluster. 
 
-Each workflow work directory is under the user specified `-w` work directory top. By default the top directory is `$HOME/cwl-workdir`, it is organized as the following:
+Each workflow work directory is under the user specified `-w` work directory top. By default the top directory is `$HOME/cwl-workdir`. The work directory has the following structure:
+
 ```
 WORKDIR_TOP
   |-workflow_id
@@ -357,10 +358,10 @@ The execution sequence of a CWL workflow is as follows:
 2. Load the input settings and bind them for parsed object (if needed).
 3. Evaluate the parsed object expressions.
 4. Traverse the parsed object and submit the all of workflow steps.
-    * If the step is a CommandLineTool, there are three types:
-        I. Independent step: Build the step command by step inputs and arguments first, then submit (`bsub`) the step with the command. Set the step to running, record the LSF job ID, and send a start event (include the step job id) to its main workflow.
-        II. A step that has dependencies and the dependencies are from the main workflow inputs: Build the step command by step inputs, arguments and dependent main workflow inputs first, then submit (`bsub`) the step with the command. Set the step to running, record the LSF job ID, and send a start event (include the step job id) to its main workflow.
-        III. A step that has dependencies and the dependencies are from other workflow steps outputs: Create a placeholder execution script (a shell script with blank content) for this step first, then submit (`bsub -H`) the step with the placeholder execution script. Set the step to waiting and record the LSF job ID.
+    - CommandLineTool steps are handled in one of three ways:
+        1. *Independent step*: Build the step command by step inputs and arguments first, then submit (`bsub`) the step with the command. Set the step to running, record the LSF job ID, and send a start event (include the step job id) to its main workflow.
+        2. *A step that has dependencies and the dependencies are from the main workflow inputs*: Build the step command by step inputs, arguments and dependent main workflow inputs first, then submit (`bsub`) the step with the command. Set the step to running, record the LSF job ID, and send a start event (include the step job id) to its main workflow.
+        3. *A step that has dependencies and the dependencies are from other workflow steps outputs*: Create a placeholder execution script (a shell script with blank content) for this step first, then submit (`bsub -H`) the step with the placeholder execution script. Set the step to waiting and record the LSF job ID.
     - If the step is a subworkflow, repeat the previous step.
     - If the step is a scatter, create a placeholder script (exit 0) for it, then submit this step (`bsub -H`). Set the step to waiting and record the LSF job ID. After the scatter is done, change the step state to done and send a start event to its main workflow, then resume (`bresume`) this step.
 5. After the main workflow receives the step start event, it broadcasts the event to its waiting steps. When a step receives the start event, it checks its dependencies. If all the dependencies are ready (all dependencies corresponding start events are received), wait (`bwait -w`) for the ready dependencies. After the wait action is met, this step validates the dependencies' outputs. If all outputs are validated, build the command for this step by the outputs and fill the command to the corresponding placeholder script. The step then sends a done event for all of the dependencies' steps to its main workflow and this step is resumed (`bresume`). Finally, set this step to running and send a start event to its main workflow.

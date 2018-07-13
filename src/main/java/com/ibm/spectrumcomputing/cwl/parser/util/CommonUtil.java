@@ -18,6 +18,8 @@ package com.ibm.spectrumcomputing.cwl.parser.util;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +138,23 @@ public class CommonUtil {
             }
         }
         return parameter;
+    }
+
+    /**
+     * Check a string that has an expression or not
+     * 
+     * @param expr
+     *            a string
+     * @return If the string that has an expression, return true
+     */
+    public static boolean hasExpr(String text) {
+        boolean result = false;
+        if (text != null) {
+            Pattern pattern = Pattern.compile("\\$\\(.*?\\)");
+            Matcher matcher = pattern.matcher(text);
+            result = matcher.find();
+        }
+        return result;
     }
 
     /**

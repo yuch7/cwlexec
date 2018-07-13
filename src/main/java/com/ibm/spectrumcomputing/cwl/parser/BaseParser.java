@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
@@ -314,7 +312,7 @@ class BaseParser {
             if (exprNode.isTextual()) {
                 String text = exprNode.asText();
                 expr = new CWLFieldValue();
-                if (text.startsWith("$") || hasExpr(text)) {
+                if (text.startsWith("$") || CommonUtil.hasExpr(text)) {
                     expr.setExpression(text);
                 } else {
                     expr.setValue(text);
@@ -738,16 +736,6 @@ class BaseParser {
             return hasFileType(getArrayItems(type, isInput), isInput);
         }
         return false;
-    }
-
-    private static boolean hasExpr(String expr) {
-        boolean result = false;
-        if (expr != null) {
-            Pattern pattern = Pattern.compile("\\$\\(.*?\\)");
-            Matcher matcher = pattern.matcher(expr);
-            result = matcher.find();
-        }
-        return result;
     }
 
     private static ParameterType getArrayItems(CWLType arrayType, boolean isInput) {

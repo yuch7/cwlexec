@@ -29,6 +29,7 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputP
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLFileBase;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputArrayType;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
+import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /**
@@ -56,25 +57,51 @@ public final class CommandOutputBindingEvaluator {
             CommandOutputBinding outputBinding) throws CWLException {
         if (outputBinding != null) {
             OutputBindingGlob glob = outputBinding.getGlob();
-            if (glob != null && glob.getGlobExpr() != null) {
-                String globExpr = glob.getGlobExpr().getExpression();
-                if (globExpr != null) {
-                    List<String> context = JSEvaluator.constructEvalContext(jsRequirement);
-                    context.add(JSEvaluator.toInputsContext(inputs));
-                    JSResultWrapper r = JSEvaluator.evaluate(context, globExpr);
-                    if (r.isString()) {
-                        glob.getGlobExpr().setValue(r.asString());
-                    } else if (r.isArray()) {
-                        glob.setPatterns(evalGlobPatterns(r, globExpr));
-                    } else {
-                        throw new CWLException(
-                                ResourceLoader.getMessage(
-                                        "cwl.expression.evaluate.failed.with.wrong.result",
-                                        globExpr,
-                                        "glob",
-                                        "a string or an array of string"),
-                                253);
+            if (glob != null) {
+                if (glob.getGlobExpr() != null) {
+                    String globExpr = glob.getGlobExpr().getExpression();
+                    if (globExpr != null) {
+                        List<String> context = JSEvaluator.constructEvalContext(jsRequirement);
+                        context.add(JSEvaluator.toInputsContext(inputs));
+                        JSResultWrapper r = JSEvaluator.evaluate(context, globExpr);
+                        if (r.isString()) {
+                            glob.getGlobExpr().setValue(r.asString());
+                        } else if (r.isArray()) {
+                            glob.setPatterns(evalGlobPatterns(r, globExpr));
+                        } else {
+                            throw new CWLException(
+                                    ResourceLoader.getMessage(
+                                            "cwl.expression.evaluate.failed.with.wrong.result",
+                                            globExpr,
+                                            "glob",
+                                            "a string or an array of string"),
+                                    253);
+                        }
                     }
+                }
+                if (glob.getPatterns() != null) {
+                    List<String> patterns = new ArrayList<>();
+                    for (String pattern : glob.getPatterns()) {
+                        if (pattern.startsWith("$") || CommonUtil.hasExpr(pattern)) {
+                            List<String> context = JSEvaluator.constructEvalContext(jsRequirement);
+                            context.add(JSEvaluator.toInputsContext(inputs));
+                            JSResultWrapper r = JSEvaluator.evaluate(context, pattern);
+                            if (r.isString()) {
+                                patterns.add(r.asString());
+                            } else {
+                                throw new CWLException(
+                                        ResourceLoader.getMessage(
+                                                "cwl.expression.evaluate.failed.with.wrong.result",
+                                                pattern,
+                                                "glob",
+                                                "a string or an array of string"),
+                                        253);
+                            }
+                        } else {
+                            patterns.add(pattern);
+                        }
+                    }
+                    glob.setPatterns(patterns);
                 }
             }
         }

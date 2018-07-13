@@ -106,7 +106,9 @@ final class JSEvaluator {
             if (value == null) {
                 value = input.getDefaultValue();
             }
-            if (input.getType().getType().getSymbol() == CWLTypeSymbol.RECORD) {
+            if (input.getType() != null &&
+                    input.getType().getType() != null &&
+                    input.getType().getType().getSymbol() == CWLTypeSymbol.RECORD) {
                 if (value instanceof List<?>) {
                     List<?> recordFields = (List<?>) value;
                     List<String> records = new ArrayList<>();

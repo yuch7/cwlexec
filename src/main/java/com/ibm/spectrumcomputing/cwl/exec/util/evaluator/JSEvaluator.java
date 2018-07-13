@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLTypeSymbol;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputRecordField;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
@@ -104,9 +106,28 @@ final class JSEvaluator {
             if (value == null) {
                 value = input.getDefaultValue();
             }
-            String inputJson = CommonUtil.asJsonStr(input.getId(), value);
-            if (inputJson != null) {
-                elements.add(inputJson.substring(1, inputJson.length() - 1));
+            if (input.getType().getType().getSymbol() == CWLTypeSymbol.RECORD) {
+                if (value instanceof List<?>) {
+                    List<?> recordFields = (List<?>) value;
+                    List<String> records = new ArrayList<>();
+                    for (Object recordField : recordFields) {
+                        if (recordField instanceof InputRecordField) {
+                            String inputJson = CommonUtil.asJsonStr(((InputRecordField) recordField).getName(),
+                                    ((InputRecordField) recordField).getValue());
+                            if (inputJson != null) {
+                                records.add(inputJson.substring(1, inputJson.length() - 1));
+                            }
+                        }
+                    }
+                    if (!records.isEmpty()) {
+                        elements.add(String.format("\"%s\":{%s}", input.getId(), String.join(",", records)));
+                    }
+                }
+            } else {
+                String inputJson = CommonUtil.asJsonStr(input.getId(), value);
+                if (inputJson != null) {
+                    elements.add(inputJson.substring(1, inputJson.length() - 1));
+                }
             }
         }
         return String.format("var inputs={%s};", String.join(",", elements));

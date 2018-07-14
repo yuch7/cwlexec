@@ -85,7 +85,12 @@ public class DatabaseManager {
         } else {
             dbDir = Paths.get(System.getProperty("user.home"), ".cwlexec", "processesdb");
         }
-        properties.put("hibernate.connection.url", String.format("jdbc:hsqldb:file:%s", dbDir));
+        //Test feature, use memory database
+        if ("true".equalsIgnoreCase(System.getenv("DISABLE_CWLEXEC_DATABASE"))) {
+            properties.put("hibernate.connection.url", "jdbc:hsqldb:mem:cwlexec-in-mem");
+        } else {
+            properties.put("hibernate.connection.url", String.format("jdbc:hsqldb:file:%s", dbDir));
+        }
         properties.put("hibernate.connection.username", "sa");
         properties.put("hibernate.connection.password", "sa");
         properties.put("hibernate.connection.driver_class", "org.hsqldb.jdbcDriver");

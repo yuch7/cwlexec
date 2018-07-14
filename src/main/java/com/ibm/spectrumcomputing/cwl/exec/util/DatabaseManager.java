@@ -34,6 +34,7 @@ import com.ibm.spectrumcomputing.cwl.model.persistence.CWLMainProcessRecord;
  */
 public class DatabaseManager {
 
+    public static final String DATABASE_PATH = "cwlexecDatabasePath";
     private final SessionFactory sessionFactory;
 
     /**
@@ -77,7 +78,13 @@ public class DatabaseManager {
 
     private Properties databaseConfig() {
         Properties properties = new Properties();
-        Path dbDir = Paths.get(System.getProperty("user.home"), ".cwlexec", "processesdb");
+        Path dbDir = null;
+        String dbPath = System.getProperty(DATABASE_PATH);
+        if (dbPath != null) {
+            dbDir = Paths.get(dbPath);
+        } else {
+            dbDir = Paths.get(System.getProperty("user.home"), ".cwlexec", "processesdb");
+        }
         properties.put("hibernate.connection.url", String.format("jdbc:hsqldb:file:%s", dbDir));
         properties.put("hibernate.connection.username", "sa");
         properties.put("hibernate.connection.password", "sa");

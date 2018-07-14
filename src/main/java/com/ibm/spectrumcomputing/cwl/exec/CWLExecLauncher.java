@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.ibm.spectrumcomputing.cwl.exec.service.CWLExecService;
 import com.ibm.spectrumcomputing.cwl.exec.service.CWLServiceFactory;
 import com.ibm.spectrumcomputing.cwl.exec.util.CWLExecUtil;
+import com.ibm.spectrumcomputing.cwl.exec.util.DatabaseManager;
 import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandUtil;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.persistence.CWLMainProcessRecord;
@@ -133,6 +134,12 @@ public class CWLExecLauncher {
                 .desc(ResourceLoader.getMessage("cwl.command.config.option")).build();
         optionIndex.put(execConfig, Integer.valueOf(++index));
         cmdOptions.addOption(execConfig);
+        Option databaseDir = Option.builder("db").longOpt("databasedir").hasArg().argName("databaseDir")
+                .desc(ResourceLoader.getMessage("cwl.command.databasedir.option",
+                        Paths.get(System.getProperty("user.home"), ".cwlexec", "processesdb").toString()))
+                .build();
+        optionIndex.put(databaseDir, Integer.valueOf(++index));
+        cmdOptions.addOption(databaseDir);
         Option link = new Option("L", "link", false, ResourceLoader.getMessage("cwl.command.linkinput.option"));
         optionIndex.put(link, Integer.valueOf(++index));
         cmdOptions.addOption(link);
@@ -211,6 +218,9 @@ public class CWLExecLauncher {
         if (commandLine.hasOption("pe")) {
             handlePreserveOption(commandLine);
         }
+        if (commandLine.hasOption("db")) {
+            handleDBDirOption(commandLine);
+        }
         if (System.getProperty(IOUtil.WORK_TOP_DIR) == null) {
             System.setProperty(IOUtil.WORK_TOP_DIR, mkDefaultWorkDir());
         }
@@ -218,6 +228,22 @@ public class CWLExecLauncher {
             System.setProperty(IOUtil.OUTPUT_TOP_DIR, DEFAULT_OUTDIR.toString());
         }
         return commandLine;
+    }
+
+    private void handleDBDirOption(CommandLine commandLine) {
+        String dbDir = commandLine.getOptionValue("db");
+        if (dbDir != null) {
+            File dbPath = new File(dbDir);
+            if (!dbPath.exists()) {
+                CWLExecUtil.printStderrMsg(ResourceLoader.getMessage("cwl.databasedir.nonexistent", dbDir));
+                System.exit(255);
+            }
+            if (!dbPath.canWrite() || !dbPath.canRead()) {
+                CWLExecUtil.printStderrMsg(ResourceLoader.getMessage("cwl.databasedir.cannot.accessed", dbDir));
+                System.exit(255);
+            }
+            System.setProperty(DatabaseManager.DATABASE_PATH, dbDir);
+        }
     }
 
     private void handleOutdirOption(CommandLine commandLine) {

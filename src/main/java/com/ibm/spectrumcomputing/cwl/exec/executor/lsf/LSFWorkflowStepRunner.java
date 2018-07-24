@@ -107,7 +107,7 @@ final class LSFWorkflowStepRunner {
                 addStepDependetents(stepNames, workflowInstance);
                 if (expectDependencies.isEmpty()) {
                     //when rerun a flow, the dependent step may be done
-                    logger.debug("step ({}) dependents all done, ready to run");
+                    logger.debug("step ({}) dependents are all done, ready to run", instance.getName());
                     prepareStepCommand(instance);
                 }
             }

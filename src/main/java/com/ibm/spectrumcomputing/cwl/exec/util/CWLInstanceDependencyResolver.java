@@ -25,6 +25,7 @@ import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.WorkflowStepInput;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.output.WorkflowOutputParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.output.WorkflowStepOutput;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.Workflow;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
@@ -180,7 +181,22 @@ public class CWLInstanceDependencyResolver {
             }
             dependentStepNames.addAll(resolveWorkflowInputDependentSteps(inputParam, parent));
         } else {
-            dependentStepNames.add(findStepFullName(parent, source.substring(0, index)));
+            String stepName = findStepFullName(parent, source.substring(0, index));
+            for (CWLInstance step : parent.getInstances()) {
+                if (step.getName().startsWith(stepName + "/")) {
+                    if (step.getParent() != null) {
+                        //dependent step is a subflow, need to find the actual command step
+                        List<WorkflowStepOutput> outs = step.getParent().getStep().getOut();
+                        for (WorkflowStepOutput out : outs) {
+                            if (out.getId().equals(source.substring(index + 1))) {
+                                stepName = step.getName();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            dependentStepNames.add(stepName);
         }
     }
 

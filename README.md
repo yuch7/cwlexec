@@ -20,9 +20,9 @@ Before downloading the package, make sure you installed [IBM Spectrum LSF 10.1.0
 Download the latest release package from https://github.com/IBMSpectrumComputing/cwlexec/releases and extract the package.
 
 ```
-tar xzvf cwlexec-0.1.tar.gz
+tar xzvf cwlexec-0.1.1.tar.gz
 ```
-Add the extracted directory `cwlexec-0.1` with the `cwlexec` command to the `PATH` environment variable.
+Add the extracted directory `cwlexec-0.1.1` with the `cwlexec` command to the `PATH` environment variable.
 
 ## Run
 Make sure that you sourced the LSF environment, then run `cwlexec` or `cwlexec -h` to view help.
@@ -39,7 +39,7 @@ git clone https://github.com/IBMSpectrumComputing/cwlexec.git # Clone cwlexec re
 cd cwlexec         # Switch to source directory
 mvn package        # build package
 ```
-After the build, the `cwlexec-0.1.tar.gz` package is generated in the `target` directory.
+After the build, the `cwlexec-0.1.1.tar.gz` package is generated in the `target` directory.
 
 
 ## Test

@@ -414,10 +414,11 @@ public final class CommandUtil {
             copyInputFile(owner, tmpInputTopPath, inputType, inputValue);
         } else if (typeSymbol == CWLTypeSymbol.ARRAY) {
             CWLType itemType = ((InputArrayType) inputType).getItems().getType();
-            @SuppressWarnings("rawtypes")
-            List itemValues = (List) inputValue;
-            for (Object itemValue : itemValues) {
-                copyInputFiles(owner, tmpInputTopPath, itemType, itemValue);
+            if (inputValue instanceof List<?>) {
+                List<?> itemValues = (List<?>) inputValue;
+                for (Object itemValue : itemValues) {
+                    copyInputFiles(owner, tmpInputTopPath, itemType, itemValue);
+                }
             }
         } else if (typeSymbol == CWLTypeSymbol.RECORD && (inputValue instanceof List)) {
             @SuppressWarnings("unchecked")
@@ -681,8 +682,11 @@ public final class CommandUtil {
         if (inputValue == null) {
             inputValue = input.getValue();
         }
-        if (inputValue == null) {
-            inputValue = input.getDefaultValue();
+        if (inputValue == null || inputValue == NullValue.NULL) {
+            Object defaultValue = input.getDefaultValue();
+            if (defaultValue != null) {
+                inputValue = defaultValue;
+            }
         }
         if ((inputValue instanceof Boolean) && inputBinding.isEmpty()) {
             inputValue = false;

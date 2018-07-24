@@ -51,11 +51,11 @@ public abstract class CWLExecTestBase {
 
     protected Properties testDatabaseConfig() {
         Properties properties = new Properties();
-        properties.put("hibernate.connection.url", "jdbc:hsqldb:mem:cwlengine-test");
+        properties.put("hibernate.connection.url", "jdbc:h2:mem:cwlengine-test");
         properties.put("hibernate.connection.username", "sa");
-        properties.put("hibernate.connection.password", "sa");
-        properties.put("hibernate.connection.driver_class", "org.hsqldb.jdbcDriver");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
+        properties.put("hibernate.connection.password", "");
+        properties.put("hibernate.connection.driver_class", "org.h2.Driver");
+        properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         properties.put("hibernate.show_sql", "false");
         properties.put("hibernate.hbm2ddl.auto", "create-drop");
         return properties;

@@ -89,12 +89,12 @@ public class DatabaseManager {
         if ("true".equalsIgnoreCase(System.getenv("DISABLE_CWLEXEC_DATABASE"))) {
             properties.put("hibernate.connection.url", "jdbc:hsqldb:mem:cwlexec-in-mem");
         } else {
-            properties.put("hibernate.connection.url", String.format("jdbc:hsqldb:file:%s", dbDir));
+            properties.put("hibernate.connection.url", String.format("jdbc:h2:file:%s;AUTO_SERVER=TRUE", dbDir));
         }
         properties.put("hibernate.connection.username", "sa");
-        properties.put("hibernate.connection.password", "sa");
-        properties.put("hibernate.connection.driver_class", "org.hsqldb.jdbcDriver");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
+        properties.put("hibernate.connection.password", "");
+        properties.put("hibernate.connection.driver_class", "org.h2.Driver");
+        properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         properties.put("hibernate.show_sql", "false");
         properties.put("hibernate.hbm2ddl.auto", "update");
         return properties;

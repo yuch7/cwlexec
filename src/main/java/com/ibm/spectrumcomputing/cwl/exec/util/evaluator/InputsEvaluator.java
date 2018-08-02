@@ -27,6 +27,7 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.FileType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLFile;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputArrayType;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputRecordField;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 
 /**
@@ -97,13 +98,20 @@ public final class InputsEvaluator extends CommandEvaluator {
             @SuppressWarnings("unchecked")
             List<CWLFile> cwlFiles = (List<CWLFile>) value;
             List<CWLFieldValue> secondaryFiles = input.getSecondaryFiles();
-            for (CWLFile cwlFile : cwlFiles) {
-                resetSecondaryFiles(cwlFile, toSecondaryPaths(jsReq,
-                        runtime,
-                        inputs,
-                        (CWLFile) cwlFile,
-                        secondaryFiles));
-            }
+			for (Object cwlFileObject : cwlFiles) {
+				CWLFile cwlFile = null;
+				if (cwlFileObject instanceof CWLFile) {
+					cwlFile = (CWLFile) cwlFileObject;
+				} else if (cwlFileObject instanceof InputRecordField) {
+					if (((InputRecordField) cwlFileObject).getValue() instanceof CWLFile) {
+						cwlFile = (CWLFile) ((InputRecordField) cwlFileObject).getValue();
+					}
+				}
+				if (cwlFile != null) {
+					resetSecondaryFiles(cwlFile,
+							toSecondaryPaths(jsReq, runtime, inputs, (CWLFile) cwlFile, secondaryFiles));
+				}
+			}
         }
     }
 

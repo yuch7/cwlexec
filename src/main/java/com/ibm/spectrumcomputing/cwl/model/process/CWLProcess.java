@@ -41,6 +41,10 @@ public abstract class CWLProcess {
      * A constant string representation of the CWL CommandLineTool class
      */
     public static final String CLASS_COMMANDLINETOOL = "CommandLineTool";
+    /**
+     * A constant string representation of the CWL ExpressionTool class
+     */
+    public static final String CLASS_EXPRESSIONTOOL = "ExpressionTool";
 
     // Use the CWL description file absolute path as the unique identifier
     private String id;

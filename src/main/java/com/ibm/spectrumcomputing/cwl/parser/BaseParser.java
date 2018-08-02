@@ -60,8 +60,8 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputA
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputEnumType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputRecordField;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputRecordType;
-import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /*
@@ -291,7 +291,7 @@ class BaseParser {
 
     protected static Object processAnyFiled(JsonNode anyNode) {
         Object value = null;
-        if (anyNode != null) {
+        if (anyNode != null && !anyNode.isNull()) {
             value = anyNode;
         }
         return value;

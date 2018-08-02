@@ -37,14 +37,14 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.NullType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.NullValue;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.Requirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
-import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /*
  * Parses CWL CommandLineTool document description file
  */
-final class CommandLineToolParser extends BaseParser {
+class CommandLineToolParser extends BaseParser {
 
     private static final String FORMAT = "format";
     private static final String STDOUT = "stdout";
@@ -52,7 +52,7 @@ final class CommandLineToolParser extends BaseParser {
     private static final String ARGUMENTS = "arguments";
     private static final String BASE_COMMAND = "baseCommand";
 
-    private CommandLineToolParser() {
+    protected CommandLineToolParser() {
     }
 
     protected static CommandLineTool yieldCommandLineTool(String descTop,
@@ -106,7 +106,7 @@ final class CommandLineToolParser extends BaseParser {
         return commandLineTool;
     }
 
-    private static List<CommandInputParameter> toCommandInputs(String descTop,
+    protected static List<CommandInputParameter> toCommandInputs(String descTop,
             JsonNode inputsNode,
             String processId) throws CWLException {
         List<CommandInputParameter> inputs = null;
@@ -205,7 +205,7 @@ final class CommandLineToolParser extends BaseParser {
         return input;
     }
 
-    private static List<CommandOutputParameter> toCommandOutputs(String parentPath,
+    protected static List<CommandOutputParameter> toCommandOutputs(String parentPath,
             JsonNode outputsNode,
             String processId) throws CWLException {
         List<CommandOutputParameter> outputs = null;
@@ -455,7 +455,7 @@ final class CommandLineToolParser extends BaseParser {
         return newExprPlaceholder;
     }
 
-    private static int[] processExitCodeField(String key, JsonNode arrayNode) throws CWLException {
+    protected static int[] processExitCodeField(String key, JsonNode arrayNode) throws CWLException {
         List<Integer> array = null;
         int[] intArray = null;
         if (arrayNode != null) {

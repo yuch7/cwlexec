@@ -39,16 +39,18 @@ import com.ibm.spectrumcomputing.cwl.exec.util.outputs.OutputsCapturer;
 import com.ibm.spectrumcomputing.cwl.model.conf.FlowExecConf;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLExpressionInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
-import com.ibm.spectrumcomputing.cwl.model.persistence.CWLStepProcessRecord;
 import com.ibm.spectrumcomputing.cwl.model.persistence.CWLMainProcessRecord;
+import com.ibm.spectrumcomputing.cwl.model.persistence.CWLStepProcessRecord;
 import com.ibm.spectrumcomputing.cwl.model.process.CWLProcess;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.InputParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.Workflow;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
 import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
@@ -251,19 +253,16 @@ public final class CWLInstanceService {
         RequirementsEvaluator.evalMainResReq(jsReq, processObj);
         Map<String, String> runtime = runtimeService.prepareMainRuntime(record, processObj);
         RequirementsEvaluator.evalMainEnvVarReq(jsReq, runtime, processObj);
-        if (processObj instanceof CommandLineTool) {
-            CommandLineTool commandLineTool = (CommandLineTool) processObj;
-            List<CommandInputParameter> inputs = commandLineTool.getInputs();
+        if (processObj instanceof ExpressionTool) {
+        	ExpressionTool expressionTool = (ExpressionTool)processObj;
+            List<CommandInputParameter> inputs = expressionTool.getInputs();
             InputsEvaluator.eval(jsReq, runtime, inputs);
-            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdin());
-            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStderr());
-            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdout());
-            instance = new CWLCommandInstance(processId, owner, commandLineTool, flowExecConf);
+            instance = new CWLExpressionInstance(processId, owner, expressionTool, flowExecConf);
             instance.setName(record.getName());
             instance.setRuntimeEnv(record.getRuntimeEnv());
             instance.setRuntime(runtime);
             instance.setReadyToRun(true);
-            ((CWLCommandInstance) instance).setCommands(runtimeService.buildRuntimeCommand((CWLCommandInstance) instance));
+            ((CWLExpressionInstance)instance).setExpression(expressionTool.getExpression());
         } else if (processObj instanceof Workflow) {
             Workflow workflow = (Workflow) processObj;
             List<InputParameter> inputs = workflow.getInputs();
@@ -277,7 +276,21 @@ public final class CWLInstanceService {
             for (WorkflowStep step : workflow.getSteps()) {
                 workflowInstance.getInstances().addAll(createStepInstances(workflowInstance, step, recover));
             }
-        } else {
+        } else if (processObj instanceof CommandLineTool) {
+            CommandLineTool commandLineTool = (CommandLineTool) processObj;
+            List<CommandInputParameter> inputs = commandLineTool.getInputs();
+            InputsEvaluator.eval(jsReq, runtime, inputs);
+            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdin());
+            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStderr());
+            CommandStdIOEvaluator.eval(jsReq, runtime, inputs, commandLineTool.getStdout());
+            instance = new CWLCommandInstance(processId, owner, commandLineTool, flowExecConf);
+            instance.setName(record.getName());
+            instance.setRuntimeEnv(record.getRuntimeEnv());
+            instance.setRuntime(runtime);
+            instance.setReadyToRun(true);
+            ((CWLCommandInstance) instance).setCommands(runtimeService.buildRuntimeCommand((CWLCommandInstance) instance));
+        }
+        else {
             throw new UnsupportedOperationException(String.format("The process (%s) cannot be supported",
                     processObj.getClass().getName()));
         }

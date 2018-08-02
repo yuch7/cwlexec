@@ -37,6 +37,7 @@ import com.ibm.spectrumcomputing.cwl.exec.util.outputs.CWLOutputJsonParser;
 import com.ibm.spectrumcomputing.cwl.exec.util.outputs.OutputsCapturer;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
+import com.ibm.spectrumcomputing.cwl.model.instance.CWLExpressionInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLWorkflowInstance;
@@ -261,7 +262,10 @@ public final class LSFWorkflowRunner {
     }
 
     private void addSteps(CWLInstance instance) throws CWLException {
-        if (instance instanceof CWLCommandInstance) {
+        if (instance instanceof CWLExpressionInstance) {
+            LSFWorkflowStepRunner step = new LSFWorkflowStepRunner(this, (CWLExpressionInstance) instance);
+            steps.add(step);
+        } else if(instance instanceof CWLCommandInstance) {
             LSFWorkflowStepRunner step = new LSFWorkflowStepRunner(this, (CWLCommandInstance) instance);
             steps.add(step);
         } else if (instance instanceof CWLWorkflowInstance) {

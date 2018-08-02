@@ -344,6 +344,8 @@ public final class CWLParser {
             processObj = CommandLineToolParser.yieldCommandLineTool(descTop, descNode);
         } else if (CWLProcess.CLASS_WORKFLOW.equals(clazz)) {
             processObj = WorkflowParser.yieldWorkflow(descTop, descFilePath, owner, descNode, namespace);
+        } else if (CWLProcess.CLASS_EXPRESSIONTOOL.equals(clazz)) {
+            processObj = ExpressionToolParser.yieldExpressionTool(descTop, descNode);
         } else {
             throw new CWLException(
                     ResourceLoader.getMessage("cwl.parser.field.unsupported", BaseParser.CLASS, clazz),

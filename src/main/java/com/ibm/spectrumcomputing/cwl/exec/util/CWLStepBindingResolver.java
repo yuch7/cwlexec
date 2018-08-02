@@ -145,6 +145,9 @@ public class CWLStepBindingResolver {
                         }
                     }
                     parameterValue = workflowInputParam.getValue();
+                    if(parameterValue == null) {
+                    	parameterValue = stepInput.getDefaultValue();
+                    }
                     if (parameterValue == null) {
                         sourceValues.add(mapRecordValues(workflowInputParam, workflowInputParam.getDefaultValue()));
                     } else {
@@ -415,6 +418,9 @@ public class CWLStepBindingResolver {
                         }
                     }
                     parameterValue = workflowInputParam.getValue();
+                    if(parameterValue == null) {
+                    	parameterValue = stepInput.getDefaultValue();
+                    }
                     if (parameterValue == null) {
                         sourceValues.add(mapRecordValues(workflowInputParam, workflowInputParam.getDefaultValue()));
                     } else {
@@ -597,6 +603,9 @@ public class CWLStepBindingResolver {
                                 }
                             }
                             parameterValue = workflowInputParam.getValue();
+                            if(parameterValue == null) {
+                            	parameterValue = stepInput.getDefaultValue();
+                            }
                             if (parameterValue == null) {
                                 sourceValues
                                         .add(mapRecordValues(workflowInputParam, workflowInputParam.getDefaultValue()));

@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
-import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +39,12 @@ import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLScatterHolder;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLTypeSymbol;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.binding.CommandLineBinding;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMethod;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.DirectoryType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.FileType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.NullValue;
@@ -61,8 +61,9 @@ import com.ibm.spectrumcomputing.cwl.model.process.requirement.InitialWorkDirReq
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.ShellCommandRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
-import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 
 /**
  * Utility for building a CWL UNIX local execution commands for a CWL process instance
@@ -154,7 +155,11 @@ public final class CommandUtil {
         // Sort the arguments and input parameters
         List<CommandArgWrapper> sorted = sortCommandArguments(commandLineTool.getArguments(), inputs);
         // Add all arguments to commands
-        commands.addAll(attachCommandBindings(instance, inputs, sorted));
+        if(!(instance.getProcess() instanceof ExpressionTool)) {
+            commands.addAll(attachCommandBindings(instance, inputs, sorted));
+        } else {
+        	attachCommandBindings(instance, inputs, sorted);
+        }
         // build command stdin
         String stdinPath = buildStdin(instance);
         if (stdinPath != null) {

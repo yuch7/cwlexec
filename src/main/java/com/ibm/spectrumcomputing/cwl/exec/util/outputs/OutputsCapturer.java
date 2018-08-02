@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +49,7 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.ParameterType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.binding.CommandOutputBinding;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.binding.OutputBindingGlob;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.CommandInputParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMethod;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.output.CommandOutputParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.output.WorkflowOutputParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLDirectory;
@@ -60,10 +60,11 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputR
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.output.OutputRecordType;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.Workflow;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
-import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /**
@@ -267,7 +268,12 @@ public class OutputsCapturer {
             String outputId,
             CWLType outputType,
             CommandOutputBinding outputBinding) throws CWLException {
-        long jobId = instance.getHPCJobId();
+    	
+    	if(instance.getProcess() instanceof ExpressionTool) {
+    		return CommandOutputsEvaluator.evalExpression(instance, inputs, outputType, outputId);
+    	}
+
+    	long jobId = instance.getHPCJobId();
         List<CWLFileBase> globFiles = globFiles(jobId, globDir, outputBinding);
         Object value = evalOutputEval(jsReq, inputs, globFiles, outputType, outputBinding);
         if (value == null) {
@@ -561,7 +567,10 @@ public class OutputsCapturer {
             boolean nochecksum) throws CWLException {
         CWLFile tmpFile = (CWLFile) output.getValue();
         String path = tmpFile.getPath();
-        if (path != null && path.startsWith(IOUtil.FILE_PREFIX)) {
+        if (path == null) {
+        	return;
+        }
+        if (path.startsWith(IOUtil.FILE_PREFIX)) {
             path = path.substring(7);
         }
         Path src = Paths.get(path);
@@ -578,7 +587,10 @@ public class OutputsCapturer {
             boolean nochecksum) throws CWLException {
         CWLDirectory tmpDir = (CWLDirectory) output.getValue();
         String path = tmpDir.getPath();
-        if (path != null && path.startsWith(IOUtil.FILE_PREFIX)) {
+        if(path == null) {
+        	return;
+        }
+        if (path.startsWith(IOUtil.FILE_PREFIX)) {
             path = path.substring(7);
         }
         Path src = Paths.get(path);
@@ -595,16 +607,22 @@ public class OutputsCapturer {
             CWLParameter output,
             boolean nochecksum) throws CWLException {
         CWLTypeSymbol items = ((OutputArrayType) output.getType().getType()).getItems().getType().getSymbol();
-        if (items == CWLTypeSymbol.FILE) {
+        if (items == CWLTypeSymbol.FILE || items == CWLTypeSymbol.DIRECTORY) {
             @SuppressWarnings("unchecked")
-            List<CWLFile> files = (List<CWLFile>) output.getValue();
-            List<CWLFile> outputFiles = new ArrayList<>();
-            for (CWLFile file : files) {
+            List<CWLFileBase> files = (List<CWLFileBase>) output.getValue();
+            List<CWLFileBase> outputFiles = new ArrayList<>();
+            for (CWLFileBase file : files) {
                 Path src = Paths.get(file.getPath());
                 Path desc = Paths.get(outputDir.toString(), file.getBasename());
                 IOUtil.copy(owner, src, desc);
-                CWLFile outputFile = toCWLFile(namespaces, output, desc, nochecksum);
-                outputFiles.add(outputFile);
+                if(file.getClazz().equals("File")) {
+                    CWLFile outputFile = toCWLFile(namespaces, output, desc, nochecksum);
+                    outputFiles.add(outputFile);
+                } else if(file.getClazz().equals("Directory")){
+                	CWLDirectory outputDirectory = (CWLDirectory)file;
+                	IOUtil.traverseDirListing(desc.toString(), outputDirectory.getListing(), true);
+                	outputFiles.add(outputDirectory);
+                }
             }
             output.setValue(outputFiles);
         }

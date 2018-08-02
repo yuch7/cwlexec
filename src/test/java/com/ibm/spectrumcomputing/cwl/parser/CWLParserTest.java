@@ -1,6 +1,10 @@
 package com.ibm.spectrumcomputing.cwl.parser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,8 +34,8 @@ import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptR
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.Requirement;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.ResourceRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.Workflow;
-import com.ibm.spectrumcomputing.cwl.parser.CWLParser;
 
 public class CWLParserTest extends CWLExecTestBase {
 
@@ -490,4 +494,11 @@ public class CWLParserTest extends CWLExecTestBase {
                 .filter(s -> s.getFormat().getFormat().getValue().equals("undefined")).count());
     }
 
+    @Test
+    public void parseExpressionTool() throws CWLException {
+        CWLProcess processObj = CWLParser.yieldCWLProcessObject(new File(DEF_ROOT_PATH + "parseInt-tool.cwl"));
+        ExpressionTool expressionTool = ((ExpressionTool) processObj);
+        assertEquals(CWLProcess.CLASS_EXPRESSIONTOOL, expressionTool.getClazz());
+        assertEquals(expressionTool.getExpression(),"$({'output': parseInt(inputs.file1.contents)})");
+    }
 }

@@ -53,9 +53,10 @@ import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLFile;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.DockerRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.model.process.workflow.WorkflowStep;
-import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /*
@@ -116,7 +117,9 @@ final class LSFBwaitExecutorTask implements Runnable {
     private int waitSteps() throws CWLException {
         CWLCommandInstance instance = step.getInstance();
         List<String> bwait = buildStepBwaitCommamd(instance, this.dependencies);
-        logger.info(ResourceLoader.getMessage(JOB_START_WAIT_MSG, CWLExecUtil.asPrettyCommandStr(bwait)));
+        if(!(step.getInstance().getProcess() instanceof ExpressionTool)) {
+            logger.info(ResourceLoader.getMessage(JOB_START_WAIT_MSG, CWLExecUtil.asPrettyCommandStr(bwait)));
+        }
         CommandExecutionResult bwaitResult = CommandExecutor.run(bwait);
         if (bwaitResult.getExitCode() != 0) {
             String bwaitFailedTipMsg = ResourceLoader.getMessage("cwl.exec.job.bwait.failed",
@@ -381,11 +384,13 @@ final class LSFBwaitExecutorTask implements Runnable {
         } else {
             OutputsCapturer.captureCommandOutputs(instance);
         }
-        logger.info(ResourceLoader.getMessage("cwl.exec.job.done",
-                instance.getName(),
-                String.valueOf(instance.getHPCJobId()),
-                IOUtil.readLSFOutputFile(Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR),
-                        String.format("%d_out", instance.getHPCJobId())))));
+        if(!(instance.getProcess() instanceof ExpressionTool)) {
+	        logger.info(ResourceLoader.getMessage("cwl.exec.job.done",
+	                instance.getName(),
+	                String.valueOf(instance.getHPCJobId()),
+	                IOUtil.readLSFOutputFile(Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR),
+	                        String.format("%d_out", instance.getHPCJobId())))));
+        }
         instance.setState(CWLInstanceState.DONE);
         instance.setEndTime(new Date().getTime());
         persistenceService.updateCWLProcessInstance(instance);
@@ -467,8 +472,10 @@ final class LSFBwaitExecutorTask implements Runnable {
         List<String> commands = runtimeService.buildRuntimeCommand(instance);
         Path placeholder = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR),
                 instance.getName().replace("/", "_"));
-        logger.info(ResourceLoader.getMessage("cwl.exec.job.fill.command", commands.get(commands.size() - 1),
-                placeholder));
+        if (!(commandLineTool instanceof ExpressionTool)) {
+            logger.info(ResourceLoader.getMessage("cwl.exec.job.fill.command", commands.get(commands.size() - 1),
+                    placeholder));
+        }
         IOUtil.createCommandScript(placeholder, commands.get(commands.size() - 1));
         instance.setCommands(commands);
         return commands;

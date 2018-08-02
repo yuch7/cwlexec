@@ -30,6 +30,7 @@ import com.ibm.spectrumcomputing.cwl.exec.util.command.CommandExecutor;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstanceState;
+import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /*
@@ -78,10 +79,14 @@ final class LSFBsubExecutorTask implements Runnable {
                 LSFReadyScatteJobExecutor.getExecutor().submit(new LSFReadyScatterJobExecutorTask(step, instance));
                 return;
             } else {
-                bsub = instance.getCommands();
-                logger.info(ResourceLoader.getMessage("cwl.exec.job.start",
-                        instance.getName(),
-                        CWLExecUtil.asPrettyCommandStr(bsub)));
+            	if(instance.getProcess() instanceof ExpressionTool) {
+            		bsub = runtimeService.buildRuntimeCommand(instance);
+            	} else {
+                    bsub = instance.getCommands();
+                    logger.info(ResourceLoader.getMessage("cwl.exec.job.start",
+                            instance.getName(),
+                            CWLExecUtil.asPrettyCommandStr(bsub)));
+            	}
             }
         } else {
             bsub = runtimeService.buildRuntimeCommand(instance);

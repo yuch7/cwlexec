@@ -97,6 +97,9 @@ final class InputSettingsParser extends BaseParser {
     private static Object fixParameterType(CWLParameter input,
             List<Pair<CWLType, Object>> typePairs) throws CWLException {
         Object value = null;
+        if(typePairs.isEmpty()) {
+        	return value;
+        }
         if (typePairs.size() == 1) {
             input.getType().setType(typePairs.get(0).getKey());
             value = typePairs.get(0).getValue();

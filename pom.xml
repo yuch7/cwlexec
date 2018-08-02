@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.ibm.spectrumcomputing.cwl</groupId>
 	<artifactId>cwlexec</artifactId>
-	<version>0.1.1</version>
+	<version>0.2.0</version>
 	<packaging>jar</packaging>
 	<name>cwlexec</name>
 

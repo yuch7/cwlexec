@@ -62,7 +62,7 @@ public class CWLIOUtilTest extends CWLExecTestBase {
         if (!is_win) {
             String filePath = "*.cwl";
             List<Path> matched = IOUtil.glob(filePath, Paths.get(DEF_ROOT_PATH));
-            assertEquals(47, matched.size());
+            assertEquals(48, matched.size());
             filePath = "input-*.cwl";
             matched = IOUtil.glob(filePath, Paths.get(DEF_ROOT_PATH));
             assertEquals(5, matched.size());

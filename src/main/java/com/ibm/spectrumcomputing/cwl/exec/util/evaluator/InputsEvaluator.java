@@ -71,6 +71,9 @@ public final class InputsEvaluator extends CommandEvaluator {
         if (value == null) {
             value = input.getDefaultValue();
         }
+        if (value == null) {
+            return;
+        }
         if (type instanceof FileType) {
             evalCWLFile(jsReq, runtime, inputs, input, value);
         } else if (type instanceof InputArrayType) {

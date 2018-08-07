@@ -64,6 +64,7 @@ import com.ibm.spectrumcomputing.cwl.model.process.tool.CommandLineTool;
 import com.ibm.spectrumcomputing.cwl.model.process.tool.ExpressionTool;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
 import com.ibm.spectrumcomputing.cwl.parser.util.IOUtil;
+import com.ibm.spectrumcomputing.cwl.parser.util.ResourceLoader;
 
 /**
  * Utility for building a CWL UNIX local execution commands for a CWL process instance
@@ -158,7 +159,7 @@ public final class CommandUtil {
         if(!(instance.getProcess() instanceof ExpressionTool)) {
             commands.addAll(attachCommandBindings(instance, inputs, sorted));
         } else {
-        	attachCommandBindings(instance, inputs, sorted);
+            attachCommandBindings(instance, inputs, sorted);
         }
         // build command stdin
         String stdinPath = buildStdin(instance);
@@ -673,6 +674,25 @@ public final class CommandUtil {
                     logger.debug("The command input argument: {} for step {}", inputArg, instance.getName());
                     args.add(inputArg);
                 }
+            }
+        } else {
+            boolean canBeNull = false;
+            if (input.getType().getTypes() != null) {
+                for (CWLType cwlType : input.getType().getTypes()) {
+                    if (cwlType.getSymbol() == CWLTypeSymbol.NULL) {
+                        canBeNull = true;
+                        break;
+                    }
+                }
+            }
+            if (inputType != null && CWLTypeSymbol.NULL == inputType.getSymbol()) {
+                canBeNull = true;
+            }
+            if (!canBeNull) {
+                throw new CWLException(
+                        ResourceLoader.getMessage("cwl.exec.argument.is.required",
+                                input.getId(), instance.getName()),
+                        252);
             }
         }
     }

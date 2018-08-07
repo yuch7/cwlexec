@@ -254,7 +254,7 @@ public final class CWLInstanceService {
         Map<String, String> runtime = runtimeService.prepareMainRuntime(record, processObj);
         RequirementsEvaluator.evalMainEnvVarReq(jsReq, runtime, processObj);
         if (processObj instanceof ExpressionTool) {
-        	ExpressionTool expressionTool = (ExpressionTool)processObj;
+            ExpressionTool expressionTool = (ExpressionTool)processObj;
             List<CommandInputParameter> inputs = expressionTool.getInputs();
             InputsEvaluator.eval(jsReq, runtime, inputs);
             instance = new CWLExpressionInstance(processId, owner, expressionTool, flowExecConf);

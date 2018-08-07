@@ -126,31 +126,31 @@ final class JSEvaluator {
                     }
                 }
             } else if (value instanceof List<?>) {
-        		List<?> recordFields = (List<?>) value;
-        		List<String> records = new ArrayList<>();
-        		for (Object recordField : recordFields) {
-        			if(recordField instanceof InputRecordField) {
-	        			String inputJson = CommonUtil.asJsonStr(((InputRecordField) recordField).getName(),
-	                            ((InputRecordField) recordField).getValue());
-	                    if (inputJson != null) {
-	                        records.add(inputJson.substring(1, inputJson.length() - 1));
-	                    }
-        			}
-        		}
-        		if(!records.isEmpty()) {
-            		return String.format("var inputs={%s};", String.join(",", records));
-        		} else {
+                List<?> recordFields = (List<?>) value;
+                List<String> records = new ArrayList<>();
+                for (Object recordField : recordFields) {
+                    if (recordField instanceof InputRecordField) {
+                        String inputJson = CommonUtil.asJsonStr(((InputRecordField) recordField).getName(),
+                                ((InputRecordField) recordField).getValue());
+                        if (inputJson != null) {
+                            records.add(inputJson.substring(1, inputJson.length() - 1));
+                        }
+                    }
+                }
+                if (!records.isEmpty()) {
+                    return String.format("var inputs={%s};", String.join(",", records));
+                } else {
                     String inputJson = CommonUtil.asJsonStr(input.getId(), value);
                     if (inputJson != null) {
                         elements.add(inputJson.substring(1, inputJson.length() - 1));
                     }
-        		}
-        	} else {
+                }
+            } else {
                 String inputJson = CommonUtil.asJsonStr(input.getId(), value);
                 if (inputJson != null) {
                     elements.add(inputJson.substring(1, inputJson.length() - 1));
                 }
-        	}
+            }
         }
         return String.format("var inputs={%s};", String.join(",", elements));
     }

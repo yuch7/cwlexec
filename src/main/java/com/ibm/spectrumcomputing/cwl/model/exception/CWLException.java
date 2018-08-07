@@ -32,9 +32,11 @@ public final class CWLException extends Exception {
      * @param exceptionCode
      *            The exception code to indicate the type of exception
      *            <ul>
-     *            <li>250 - Failed to validate the CWL document</li>
+     *            <li>250 - The workflow input/output cannot be found</li>
      *            <li>251 - Failed to parse CWL document</li>
+     *            <li>252 - Fail to load workflow inputs</li>
      *            <li>253 - Failed to evaluate a CWL expression</li>
+     *            <li>254 - Fail to capture the workflow/step output after the workflow/step is done</li>
      *            <li>255 - A system exception, e.g. Failed to operate I/O,
      *            Failed to execute a command, etc.</li>
      *            </ul>

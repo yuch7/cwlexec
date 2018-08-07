@@ -298,7 +298,7 @@ If any step exits in a workflow, the workflow exits and the command exit code wi
 | 0       | The workflow is done |
 | 33      | There is an unsupported feature in the workflow |
 | 130     | User used Ctrl + C to interupt the workflow |
-| 250     | The workflow version is unsupported |
+| 250     | The workflow input/output cannot be found |
 | 251     | Fail to parse workflow |
 | 252     | Fail to load workflow inputs |
 | 253     | Fail to evaluate the expression in workflow |

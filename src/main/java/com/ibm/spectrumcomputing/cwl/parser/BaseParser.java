@@ -606,7 +606,7 @@ class BaseParser {
             JsonNode fileNode,
             boolean nochecksum) throws CWLException {
         CWLFile cwlFile = null;
-        if (fileNode.isObject()) {
+        if (fileNode.isObject() && validateClassField(fileNode.get("class"), "File")) {
             cwlFile = new CWLFile();
             setCWLFileBase(parentPath, id, cwlFile, fileNode);
             setCWLFileAttr(cwlFile, Paths.get(cwlFile.getPath()));
@@ -637,7 +637,7 @@ class BaseParser {
             JsonNode dirNode,
             boolean nocecksum) throws CWLException {
         CWLDirectory dir = null;
-        if (dirNode.isObject()) {
+        if (dirNode.isObject() && validateClassField(dirNode.get("class"), "Directory")) {
             dir = new CWLDirectory();
             JsonNode listingNode = dirNode.get("listing");
             setCWLDirBase(parentPath, id, dir, dirNode, listingNode);
@@ -695,6 +695,17 @@ class BaseParser {
             }
         }
         return pfs;
+    }
+
+    private static boolean validateClassField(JsonNode classNode, String expectedClass) throws CWLException {
+        if (classNode != null && classNode.isTextual()) {
+            if (classNode.asText().equals(expectedClass)) {
+                return true;
+            }
+        }
+        throw new CWLException(
+                ResourceLoader.getMessage(CWL_PARSER_INVALID_FIELD, "class", "Must be" + expectedClass),
+                251);
     }
 
     private static PostFailureScript toPostFailureScript(String key, JsonNode node) throws CWLException {

@@ -25,6 +25,7 @@ import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.FileType;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.NullValue;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.file.CWLFile;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputArrayType;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputRecordField;
@@ -68,11 +69,13 @@ public final class InputsEvaluator extends CommandEvaluator {
             CWLParameter input) throws CWLException {
         CWLType type = input.getType().getType();
         Object value = input.getValue();
-        if (value == null) {
-            value = input.getDefaultValue();
-        }
-        if (value == null) {
-            return;
+        if (value == null || value == NullValue.NULL) {
+            Object defaultValue = input.getDefaultValue();
+            if (defaultValue != null && defaultValue != NullValue.NULL) {
+                value = defaultValue;
+            } else {
+                return;
+            }
         }
         if (type instanceof FileType) {
             evalCWLFile(jsReq, runtime, inputs, input, value);

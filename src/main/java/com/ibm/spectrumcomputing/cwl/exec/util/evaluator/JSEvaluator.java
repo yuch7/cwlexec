@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLTypeSymbol;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.NullValue;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.type.input.InputRecordField;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
 import com.ibm.spectrumcomputing.cwl.parser.util.CommonUtil;
@@ -103,8 +104,11 @@ final class JSEvaluator {
         List<String> elements = new ArrayList<>();
         for (CWLParameter input : inputs) {
             Object value = input.getValue();
-            if (value == null) {
-                value = input.getDefaultValue();
+            if (value == null || value == NullValue.NULL) {
+                Object defaultValue = input.getDefaultValue();
+                if (defaultValue != null && defaultValue != NullValue.NULL) {
+                    value = defaultValue;
+                }
             }
             if (input.getType() != null &&
                     input.getType().getType() != null &&

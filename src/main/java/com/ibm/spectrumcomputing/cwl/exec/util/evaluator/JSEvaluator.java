@@ -105,10 +105,7 @@ final class JSEvaluator {
         for (CWLParameter input : inputs) {
             Object value = input.getValue();
             if (value == null || value == NullValue.NULL) {
-                Object defaultValue = input.getDefaultValue();
-                if (defaultValue != null && defaultValue != NullValue.NULL) {
-                    value = defaultValue;
-                }
+                value = input.getDefaultValue();
             }
             if (input.getType() != null &&
                     input.getType().getType() != null &&

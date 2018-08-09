@@ -709,7 +709,7 @@ public final class CommandUtil {
         }
         if (inputValue == null || inputValue == NullValue.NULL) {
             Object defaultValue = input.getDefaultValue();
-            if (defaultValue != null && defaultValue != NullValue.NULL) {
+            if (defaultValue != null) {
                 inputValue = defaultValue;
             }
         }

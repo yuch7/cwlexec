@@ -43,19 +43,17 @@ After the build, the `cwlexec-0.2.0.tar.gz` package is generated in the `target`
 
 
 ## Test
-All conformance test cases (127) are pased except one test case (`v1.0/envvar.cwl`) is not passed due to LSF limitation: LSF does not support propagating the `$HOME` variable.
+```
+cd cwlexec
+mvn clean package # build package and run unit test
+cd src/test/integration-test
+./run.sh
+```
+All conformance test cases (127) are pased, except `src/test/integration-test/v1.0/envvar.cwl`, due to LSF limitation: LSF does not support propagating the `$HOME` variable.
 
 ### Run your conformance tests
 
-[cwltest](https://github.com/common-workflow-language/cwltest) is a CWL testing tool from CWL Specification to run conformance tests.
-
 For instructions on running conformance tests refer to https://github.com/common-workflow-language/common-workflow-language/blob/master/CONFORMANCE_TESTS.md
-
-```
-cd cwlexec/src/test/integration-test
-./run.sh
-```
-
 
 ## Features
 `cwlexec` has the following features:

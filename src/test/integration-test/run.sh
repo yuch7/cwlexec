@@ -41,8 +41,7 @@ which cwlexec >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     log "cwlexec is required."
 fi
-log "`which cwlexec` will be tested."
-log "cwlexec is ready."
+log "cwlexec (`which cwlexec`) is ready."
 
 if [ "$1"x = "--with-cleanup"x ]; then
     log "cleanup cwlexec workdir and database dir ..."

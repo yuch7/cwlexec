@@ -134,20 +134,23 @@ public final class CommandOutputsEvaluator extends CommandEvaluator {
 		List<String> scriptLibs = new ArrayList<>();
 		scriptLibs.add(JSEvaluator.toInputsContext((List<CommandInputParameter>) inputs));
 		JSResultWrapper r = JSEvaluator.evaluate(scriptLibs, expression);
-		return evalExpressionValue(r, instance.getOwner(), inputs, outputType, outputId, tmpDir, false);
+		return evalExpressionValue(r, instance.getOwner(), outputType, outputId, tmpDir, false);
     }
 
-    private static Object evalExpressionValue(JSResultWrapper r, String owner, List<CommandInputParameter> inputs, CWLType outputType, String outputId, Path tmpDir, boolean inArray) throws CWLException {
+    private static Object evalExpressionValue(JSResultWrapper r, String owner, CWLType outputType, String outputId, Path tmpDir, boolean inArray) throws CWLException {
 
-    	if (outputType.getSymbol() == CWLTypeSymbol.DIRECTORY) {
-			CWLDirectory dir = inArray?r.asCWLDirectory():r.getValue(outputId).asCWLDirectory();
-			return evalExpressionDirectory(owner, inputs, tmpDir, dir);
+    	if (outputType.getSymbol() == CWLTypeSymbol.DIRECTORY || outputType.getSymbol() == CWLTypeSymbol.FILE) {
+			JSResultWrapper rs = inArray?r:r.getValue(outputId);
+			if(rs.isCWLFile()) {
+				CWLFile file = rs.asCWLFile();
+				evalExpressionFile(tmpDir, file);
+				return file;
+			} else if(rs.isCWLDirectory()) {
+				CWLDirectory dir = rs.asCWLDirectory();
+				return evalExpressionDirectory(owner, tmpDir, dir);
+			}
 		} else if (outputType.getSymbol() == CWLTypeSymbol.INT || outputType.getSymbol() == CWLTypeSymbol.LONG) {
 			return inArray?r.asLong():r.getValue(outputId).asLong();
-		} else if (outputType.getSymbol() == CWLTypeSymbol.FILE) {
-			CWLFile file = inArray?r.asCWLFile():r.getValue(outputId).asCWLFile();
-			evalExpressionFile(tmpDir, file);
-			return file;
 		} else if (outputType.getSymbol() == CWLTypeSymbol.DOUBLE || outputType.getSymbol() == CWLTypeSymbol.FLOAT) {
 			return inArray?r.asDouble():r.getValue(outputId).asDouble();
 		} else if (outputType.getSymbol() == CWLTypeSymbol.STRING || outputType.getSymbol() == CWLTypeSymbol.ENUM) {
@@ -160,17 +163,20 @@ public final class CommandOutputsEvaluator extends CommandEvaluator {
 			 List<Object> values = new ArrayList<>();
 	         CWLType items = ((OutputArrayType) outputType).getItems().getType();
 	         for (JSResultWrapper e : r.elements()) {
+	        	 if(e.isNull()) {
+	        		 continue;
+	        	 }
 	        	 inArray = true;
 	        	 if(e.getValue(outputId)!=null && !e.getValue(outputId).isNull() && e.getValue(outputId).isArray()) {
 	        		 for(JSResultWrapper sube: e.getValue(outputId).elements()) {
-	        			 values.add(evalExpressionValue(sube, owner, inputs, items, outputId, tmpDir, inArray));	 
+	        			 values.add(evalExpressionValue(sube, owner, items, outputId, tmpDir, inArray));	 
 	        		 }
-	        	 } else if(!e.isNull() && e.isArray()){
+	        	 } else if(e.isArray()){
 	        		 for(JSResultWrapper sube: e.elements()) {
-	        			 values.add(evalExpressionValue(sube, owner, inputs, items, outputId, tmpDir, inArray));	 
+	        			 values.add(evalExpressionValue(sube, owner, items, outputId, tmpDir, inArray));	 
 	        		 }
 	        	 } else {
-		        	 values.add(evalExpressionValue(e, owner, inputs, items, outputId, tmpDir, inArray));
+		        	 values.add(evalExpressionValue(e, owner, items, outputId, tmpDir, inArray));
 	        	 }
 	         }
 	         return values;
@@ -179,47 +185,44 @@ public final class CommandOutputsEvaluator extends CommandEvaluator {
     }
     
 	private static void evalExpressionFile(Path tmpDir, CWLFile file) throws CWLException {
-		file.setPath(tmpDir + File.separator + file.getBasename());
-		if (file.getContents() != null) {
+		if (file.getBasename() != null && file.getContents() != null) {
+			file.setPath(tmpDir + File.separator + file.getBasename());
 			IOUtil.write64Kib(new File(file.getPath()), file.getContents());
 		}
 	}
 
-	private static CWLDirectory evalExpressionDirectory(String owner, List<CommandInputParameter> inputs, Path tmpDir,
+	private static CWLDirectory evalExpressionDirectory(String owner, Path tmpDir,
 			CWLDirectory dir) throws CWLException {
-		String path = tmpDir + File.separator + dir.getBasename();
-		IOUtil.mkdirs(owner, Paths.get(path));
-		CWLDirectory directory = IOUtil.toCWLDirectory(Paths.get(path));
-		for (CommandInputParameter input : inputs) {
-			evalDirectory(owner,path,input.getValue(),directory);
+		if(dir.getPath() == null) {
+			String path = tmpDir + File.separator + dir.getBasename();
+			if (! Paths.get(path).toFile().exists()) {
+				IOUtil.mkdirs(owner, Paths.get(path));
+				dir.setPath(path);
+				evalDirectory(owner,path,dir);
+			}
 		}
-		return directory;
+		return dir;
 	}
 	
-	private static void evalDirectory(String owner, String path, Object inputObj, CWLDirectory directory) throws CWLException {
-		if (inputObj instanceof List) {
-			@SuppressWarnings("unchecked")
-			List<CWLFileBase> list = (List<CWLFileBase>) inputObj;
-			for (int i=0; i<list.size();i++) {
-				Object obj = list.get(i);
+	private static void evalDirectory(String owner, String path, CWLDirectory directory) throws CWLException {
+		List<CWLFileBase> list = directory.getListing();
+		if (!list.isEmpty()) {
+			for (int i = 0; i < list.size(); i++) {
+				Object obj = directory.getListing().get(i);
 				if (obj instanceof CWLFile) {
 					CWLFile file = (CWLFile) (obj);
 					IOUtil.copy(owner, Paths.get(file.getPath()), Paths.get(path));
 					CWLFile newFile = IOUtil.toCWLFile(Paths.get(path + File.separator + file.getBasename()), false);
 					list.set(i, newFile);
-				} else if(obj instanceof CWLDirectory) {
-					evalDirectory(owner, path, obj, directory);
+				} else if (obj instanceof CWLDirectory) {
+					CWLDirectory dir = (CWLDirectory) (obj);
+					String target = path;
+					IOUtil.copy(owner, Paths.get(dir.getPath()), Paths.get(target));
+					dir.setPath(target + File.separator + dir.getBasename());
+					evalDirectory(owner, dir.getPath(), dir);
 				}
-			}
-			directory.setListing(list);
-		} else if (inputObj instanceof CWLFile) {
-			CWLFile file = (CWLFile) inputObj;
-			IOUtil.copy(owner, Paths.get(file.getPath()), Paths.get(path));
-		} else if (inputObj instanceof CWLDirectory) {
-			CWLDirectory inputDir = (CWLDirectory) inputObj;
-			if (!inputDir.getListing().isEmpty()) {
-				evalDirectory(owner, path, inputDir.getListing(), directory);
 			}
 		}
 	}
+
 }

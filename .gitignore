@@ -5,3 +5,5 @@
 examples/cwl-engine*
 dependency-reduced-pom.xml
 target
+test.*.log
+file1-*

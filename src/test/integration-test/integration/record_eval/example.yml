@@ -1,0 +1,3 @@
+parameters:
+  sample: MySample
+  out_dir: MySample_folder

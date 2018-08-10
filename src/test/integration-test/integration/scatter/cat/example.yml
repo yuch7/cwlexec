@@ -1,0 +1,7 @@
+first_file:
+  class: File
+  path: inputs/english.txt
+other_files:
+ - {class: File, path: inputs/french.txt}
+ - {class: File, path: inputs/spanish.txt}
+ - {class: File, path: inputs/german.txt}

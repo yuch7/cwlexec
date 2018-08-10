@@ -1,0 +1,6 @@
+sample: MySample
+out_dir: 
+  class: Directory
+  path: outdir/MySample
+  #basename: MySample
+

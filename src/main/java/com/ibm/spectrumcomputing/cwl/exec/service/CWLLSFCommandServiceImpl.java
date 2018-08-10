@@ -174,7 +174,7 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
             if (ramMin != ramMax) {
                 commands.addAll(Arrays.asList("-M", String.valueOf(ramMax)));
             }
-            commands.addAll(Arrays.asList("-R", String.format("mem > %d", coresMin)));
+            commands.addAll(Arrays.asList("-R", String.format("mem > %d", ramMin)));
         }
         if (coresMin != null) {
             if (coresMin == coresMax) {

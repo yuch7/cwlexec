@@ -1,0 +1,3 @@
+datafile:
+  class: File
+  path: data.csv

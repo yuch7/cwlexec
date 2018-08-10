@@ -1,0 +1,6 @@
+inp1:
+    class: File
+    path: foo1
+inp2:
+    class: File
+    path: foo2

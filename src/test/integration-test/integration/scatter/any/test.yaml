@@ -1,0 +1,4 @@
+inFile:
+  class: File
+  path: MXtasksModArgs_20180302.csv
+imageProcessingScript: /home/weliu/workspace/cwlexec/src/test/integration-test/integration/scatter/any/MXtasksModLSF.py

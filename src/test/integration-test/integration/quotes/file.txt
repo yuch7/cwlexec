@@ -1,0 +1,6 @@
+1	hi
+2	hello
+3	good_day
+4	bye
+5	seeya
+6	later

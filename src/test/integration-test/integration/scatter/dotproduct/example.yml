@@ -1,0 +1,8 @@
+file_input:
+ - {class: File, path: 1.tmp}
+ - {class: File, path: 2.tmp}
+ - {class: File, path: 3.tmp}
+foo_input:
+ - sheep
+ - squid
+ - moose

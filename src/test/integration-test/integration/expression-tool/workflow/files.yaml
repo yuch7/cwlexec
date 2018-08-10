@@ -1,0 +1,12 @@
+{
+  "input_fastq": [
+  {
+    "class": "File",
+    "location": "example_1.fastq"
+  },
+  {
+    "class": "File",
+    "location": "example_2.fastq"
+  }
+  ]
+}

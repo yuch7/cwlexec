@@ -1,0 +1,5 @@
+{
+    "queue": "priority",
+    "project": "CWL_test",
+    "res_req": "rusage[mem=100]"
+}

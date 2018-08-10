@@ -1,0 +1,3 @@
+ifiles:
+ - {class: File, path: 1.tmp}
+ - {class: File, path: 2.tmp}

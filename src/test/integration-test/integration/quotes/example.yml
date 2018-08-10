@@ -1,0 +1,3 @@
+ifile:
+  class: File
+  path: file.txt

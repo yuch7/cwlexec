@@ -6,7 +6,7 @@
 
 * Tight integration with `IBM® Spectrum LSF`
 * Leverages `LSF` features (such as native container support)
-* Implements CWL draft-3 and v1.0 with a few exceptions (SoftwareRequirement, ExpressionTool, include directive, remote location in File/Directory specification)
+* Implements CWL draft-3 and v1.0 with a few exceptions (SoftwareRequirement, include directive, remote location in File/Directory specification)
 
 
 

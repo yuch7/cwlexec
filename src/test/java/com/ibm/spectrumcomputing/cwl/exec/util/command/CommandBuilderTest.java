@@ -508,4 +508,23 @@ public class CommandBuilderTest extends CWLExecTestBase {
         RequirementsEvaluator.evalInitialWorkDirReq(instance);
         assertNotNull(instance);
     }
+
+    @Test
+    public void parseEnumArray() throws CWLException {
+        CommandLineTool processObj = (CommandLineTool) CWLParser.yieldCWLProcessObject(new File(DEF_ROOT_PATH + "enum_array/test.cwl"));
+        CWLParser.loadInputSettings(processObj, new File(DEF_ROOT_PATH + "enum_array/test.input.yaml"));
+        assertNotNull(processObj);
+        InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(processObj, InlineJavascriptRequirement.class);
+        RequirementsEvaluator.evalMainEnvVarReq(jsReq, runtime, processObj);
+        List<CommandInputParameter> inputs = (List<CommandInputParameter>) processObj.getInputs();
+        InputsEvaluator.eval(jsReq, runtime, inputs);
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, processObj.getStdin());
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, processObj.getStderr());
+        CommandStdIOEvaluator.eval(jsReq, runtime, inputs, processObj.getStdout());
+        CWLCommandInstance instance = new CWLCommandInstance("test", owner, processObj, new FlowExecConf());
+        instance.setRuntime(runtime);
+        instance.setRuntimeEnv(RuntimeEnv.LOCAL);
+        List<String> commands = CommandUtil.buildCommand(instance);
+        assertEquals(4, commands.size());
+    }
 } 

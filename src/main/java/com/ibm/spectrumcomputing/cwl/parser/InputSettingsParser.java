@@ -264,6 +264,9 @@ final class InputSettingsParser extends BaseParser {
         case ANY:
             values = processAnyArrayField(arrayNode);
             break;
+        case ENUM:
+            values = processEnumArrayField(inputId, arrayNode);
+            break;
         default:
             throw new CWLException(
                     ResourceLoader.getMessage(CWL_PARSER_INVALID_TYPE, "type", VALID_CWL_TYPE),
@@ -283,6 +286,10 @@ final class InputSettingsParser extends BaseParser {
         }
         throw new CWLException(ResourceLoader.getMessage(CWL_PARSER_INVALID_TYPE, inputId, symbols.toString()),
                 251);
+    }
+
+    private static List<String> processEnumArrayField(String key, JsonNode arrayNode) throws CWLException {
+        return processStringArrayField(key, arrayNode);
     }
 
     private static List<InputRecordField> processRecordTypes(

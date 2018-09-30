@@ -504,17 +504,17 @@ public final class CommandUtil {
                 args.add(new CommandArgWrapper(index, param));
                 index = index + 1;
             } else {
-                // The input parameter may be a record type, for a record, it
+                // The input parameter may be a record/array type, for a record, it
                 // may has many specific types, we need treat them as a generic
                 // Record
-                index = wrapRecordField(args, param, index);
+                index = wrapSchemaTypeParam(args, param, index);
             }
         }
         Collections.sort(args);
         return args;
     }
 
-    private static int wrapRecordField(List<CommandArgWrapper> args, CommandInputParameter param, int index) {
+    private static int wrapSchemaTypeParam(List<CommandArgWrapper> args, CommandInputParameter param, int index) {
         boolean exclusive = false;
         CWLType paramType = param.getType().getType();
         if (paramType == null) {
@@ -535,6 +535,18 @@ public final class CommandUtil {
                     if (exclusive) {
                         break;
                     }
+                }
+            }
+        } else if (paramType instanceof InputArrayType) {
+            if (((InputArrayType) paramType).getInputBinding() != null) {
+                List<?> items = (List<?>) param.getValue();
+                for (Object item : items) {
+                    CommandInputParameter itemParam = new CommandInputParameter(param.getId());
+                    itemParam.setType(((InputArrayType) paramType).getItems());
+                    itemParam.setInputBinding(((InputArrayType) paramType).getInputBinding());
+                    itemParam.setValue(item);
+                    args.add(new CommandArgWrapper(index, itemParam));
+                    index = index + 1;
                 }
             }
         }

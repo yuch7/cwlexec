@@ -1,0 +1,6 @@
+input_files:
+  - class: File
+    path: input1.txt
+  - class: File
+    path: input2.txt
+output_filename: cwltool.txt

@@ -1,0 +1,5 @@
+files:
+    - class: File
+      path: data/file3.txt
+    - class: File
+      path: data/file4.txt

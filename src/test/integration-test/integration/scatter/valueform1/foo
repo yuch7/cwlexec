@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+filenames=""
+outfile=""
+
+usage() {
+cat <<EOF
+Usage: foo --INPUT filename1 [--INPUT filename2 ...] --OUTPUT outfile
+EOF
+}
+
+while [ ! -z $1 ]; do
+	case $1 in
+		--INPUT) filenames="$filenames$2 "; shift;;
+		--OUTPUT) outfile=$2; shift;;
+		*) >&2 echo "ERROR: Unrecognized option '$1'" && exit 1;;
+	esac
+	shift
+done
+
+if [[ ! $filenames ]]; then
+	>&2 echo "ERROR: No filename specified with --INPUT"
+	usage
+	exit 1
+elif [[ ! $outfile ]]; then
+	>&2 echo "ERROR: No outut file specified with --OUTPUT"
+	usage
+	exit 1
+fi
+
+
+cmd="cat $filenames"
+eval $cmd > $outfile
+

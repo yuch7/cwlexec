@@ -68,11 +68,11 @@ if [ $? -ne 0 ]; then
     log "Failed to run integration test [16-19,22]."
     exit 1
 fi
-cwltest -n 19 --test integration_test.yaml --tool "cwlexec" "-c integration/1st-workflow/dockerapp-execconf.json"
-if [ $? -ne 0 ]; then
-    log "Failed to run docker application integration test."
-    exit 1
-fi
+#cwltest -n 19 --test integration_test.yaml --tool "cwlexec" "-c integration/1st-workflow/dockerapp-execconf.json"
+#if [ $? -ne 0 ]; then
+#    log "Failed to run docker application integration test."
+#    exit 1
+#fi
 
 log "Start Expression Tool Test ..."
 ./run.expressiontool.sh >/dev/null 2>&1
@@ -86,11 +86,11 @@ echo -e "All tests [${_test_count}/8] passed."
 log "Start Scatter Test ..."
 ./run.scatter.sh >/dev/null 2>&1
 _test_count=$?
-if [ $_test_count -ne 7 ]; then
+if [ $_test_count -ne 9 ]; then
     log "Failed to run scatter test [$(($_test_count + 1))]"
     exit 1
 fi
-echo -e "All tests [${_test_count}/7] passed"
+echo -e "All tests [${_test_count}/9] passed"
 
 log "Start Issue Test ..."
 ./run.issues.sh >/dev/null 2>&1

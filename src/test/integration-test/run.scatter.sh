@@ -57,4 +57,20 @@ if [ $exitcode -ne 0 ]; then
 fi
 _test_count=7
 
+cd $CWLTEST_TOP/integration/scatter/valueform0
+./run_example.sh
+exitcode=$?
+if [ $exitcode -ne 0 ]; then
+    exit 1
+fi
+_test_count=8
+
+cd $CWLTEST_TOP/integration/scatter/valueform1
+./run_example.sh
+exitcode=$?
+if [ $exitcode -ne 0 ]; then
+    exit 1
+fi
+_test_count=9
+
 exit ${_test_count}

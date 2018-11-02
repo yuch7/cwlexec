@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.StepInValueFromEvaluator;
+import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
@@ -206,10 +207,20 @@ public class CWLStepBindingResolver {
         InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(stepInstance, 
                 InlineJavascriptRequirement.class);
         List<CWLParameter> inputs = getStepInputParameters(parent, step);
+        
+        Object self = toStepInputSelf(sourceValues);
         Object valueFrom = StepInValueFromEvaluator.eval(jsReq, parent.getRuntime(), inputs,
-                toStepInputSelf(sourceValues), step, stepInput);
+               self, step, stepInput);
         if (valueFrom != null) {
             runInputParam.setValue(valueFrom);
+        } else {
+            // if step need scatter, after scattered, the inputs can be confirmed.
+            //TODO:
+            CWLFieldValue valueFromExpr = stepInput.getValueFrom();
+            if (valueFromExpr != null) {
+                runInputParam.setSelf(self);
+                runInputParam.setValueFromExpr(valueFromExpr.getExpression());
+            }
         }
     }
 

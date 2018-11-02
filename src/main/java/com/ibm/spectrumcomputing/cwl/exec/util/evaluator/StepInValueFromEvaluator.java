@@ -74,6 +74,40 @@ public class StepInValueFromEvaluator {
         return value;
     }
 
+    /**
+     * Evaluates a CWL step process valueFrom expression
+     * 
+     * @param jsReq
+     *            The InlineJavascriptRequirement of the CWL step process
+     * @param runtime
+     *            The runtime of the CWL step process
+     * @param inputs
+     *            The corresponding input parameters of the CWL step process
+     * @param self
+     *            The corresponding input parameter value of the CWL step process
+     * @param valueFromExpr
+     *            The valueFrom expression
+     * @return The value of the expression
+     * @throws CWLException
+     *             Failed to evaluate the expression
+     */
+    public static Object evalExpr(InlineJavascriptRequirement jsReq,
+            Map<String, String> runtime,
+            List<? extends CWLParameter> inputs,
+            Object self,
+            String valueFromExpr) throws CWLException {
+        Object value = null;
+        if (valueFromExpr != null) {
+            List<String> context = JSEvaluator.constructEvalContext(jsReq);
+            context.add(JSEvaluator.toRuntimeContext(runtime));
+            context.add(JSEvaluator.toInputsContext(inputs));
+            context.add(JSEvaluator.toSelfContext(self));
+            JSResultWrapper r = JSEvaluator.evaluate(context, valueFromExpr);
+            value = toExprValue(r);
+        }
+        return value;
+    }
+
     private static Object evalValue(InlineJavascriptRequirement jsReq,
             Map<String, String> runtime,
             Object self,
@@ -96,7 +130,10 @@ public class StepInValueFromEvaluator {
                 if (dependentScatter != null) {
                     value = evalExprWithScatter(stepInput.getId(), dependentScatter, step);
                 } else {
-                    value = evalExpr(jsReq, runtime, inputs, self, valueFrom.getExpression());
+                    // refer to issue #36
+                    if (step.getScatter() == null) {
+                        value = evalExpr(jsReq, runtime, inputs, self, valueFrom.getExpression());
+                    }
                 }
             }
         }
@@ -128,23 +165,6 @@ public class StepInValueFromEvaluator {
             value = targetParam.getValue();
             step.getScatter().add(stepInputId);
             step.setScatterMethod(ScatterMethod.DOTPRODUCT);
-        }
-        return value;
-    }
-
-    private static Object evalExpr(InlineJavascriptRequirement jsReq,
-            Map<String, String> runtime,
-            List<CWLParameter> inputs,
-            Object self,
-            String valueFromExpr) throws CWLException {
-        Object value = null;
-        if (valueFromExpr != null) {
-            List<String> context = JSEvaluator.constructEvalContext(jsReq);
-            context.add(JSEvaluator.toRuntimeContext(runtime));
-            context.add(JSEvaluator.toInputsContext(inputs));
-            context.add(JSEvaluator.toSelfContext(self));
-            JSResultWrapper r = JSEvaluator.evaluate(context, valueFromExpr);
-            value = toExprValue(r);
         }
         return value;
     }

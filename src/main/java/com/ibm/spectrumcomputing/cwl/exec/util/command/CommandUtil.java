@@ -35,6 +35,7 @@ import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandLineBindingEvalu
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.CommandStdIOEvaluator;
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.InputsEvaluator;
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.RequirementsEvaluator;
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.StepInValueFromEvaluator;
 import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
@@ -640,6 +641,7 @@ public final class CommandUtil {
         return has;
     }
 
+    @SuppressWarnings("unchecked")
     private static void attachInputArgument(List<String> args,
             InitialWorkDirRequirement initialWorkDirReq,
             ShellCommandRequirement shellCmdReq,
@@ -665,6 +667,18 @@ public final class CommandUtil {
         // valueFrom, use the value actual type, only string
         if (inputValue instanceof String && inputType.getSymbol() != CWLTypeSymbol.STRING) {
             inputType = new StringType();
+        }
+        // refer to issue #36
+        if (input.getValueFromExpr() != null) {
+            inputValue = StepInValueFromEvaluator.evalExpr(jsReq, runtime, inputs, input.getSelf(), input.getValueFromExpr());
+            Object value = input.getValue();
+            if (value == null) {
+                List<Object> values = new ArrayList<Object>();
+                values.add(inputValue);
+                input.setValue(values);
+            } else if (value instanceof List<?>) {
+                ((List<Object>) value).add(inputValue);
+            }
         }
         if (inputValue != null && inputValue != NullValue.NULL) {
             logger.debug("The input (id={}, type={}, value={}) of step {}",

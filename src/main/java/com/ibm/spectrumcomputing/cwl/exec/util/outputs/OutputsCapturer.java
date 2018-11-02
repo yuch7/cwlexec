@@ -546,6 +546,9 @@ public class OutputsCapturer {
     }
 
     private static void writeScatterValues(Path globDir, CommandOutputBinding outputBinding, List<Object> valueList) {
+        if (outputBinding.getGlob().getGlobExpr().getValue() == null) {
+            return;
+        }
         Path fpath = globDir.resolve(outputBinding.getGlob().getGlobExpr().getValue());
         try (BufferedWriter bfw = Files.newBufferedWriter(Files.createFile(fpath))) {
             for (Object value: valueList) {

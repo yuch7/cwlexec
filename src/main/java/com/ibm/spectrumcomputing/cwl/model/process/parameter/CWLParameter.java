@@ -41,6 +41,9 @@ public abstract class CWLParameter {
     private Object defaultValue;
     // The actual value after evaluation
     private Object value;
+    // only for scatter case, refer to issue #36
+    private Object self;
+    private String valueFromExpr;
 
     /**
      * Returns the ID of this parameter
@@ -213,5 +216,21 @@ public abstract class CWLParameter {
      */
     public void setValue(Object value) {
         this.value = value;
+    }
+
+    public Object getSelf() {
+        return self;
+    }
+
+    public void setSelf(Object self) {
+        this.self = self;
+    }
+
+    public String getValueFromExpr() {
+        return valueFromExpr;
+    }
+
+    public void setValueFromExpr(String valueFromExpr) {
+        this.valueFromExpr = valueFromExpr;
     }
 }

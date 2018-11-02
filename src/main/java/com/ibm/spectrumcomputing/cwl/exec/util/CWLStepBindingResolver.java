@@ -214,8 +214,7 @@ public class CWLStepBindingResolver {
         if (valueFrom != null) {
             runInputParam.setValue(valueFrom);
         } else {
-            // if step need scatter, after scattered, the inputs can be confirmed.
-            //TODO:
+            // refer to issue #36
             CWLFieldValue valueFromExpr = stepInput.getValueFrom();
             if (valueFromExpr != null) {
                 runInputParam.setSelf(self);

@@ -130,9 +130,10 @@ public class StepInValueFromEvaluator {
                 if (dependentScatter != null) {
                     value = evalExprWithScatter(stepInput.getId(), dependentScatter, step);
                 } else {
-                    // refer to issue #36
-                    if (step.getScatter() == null) {
+                    try {
                         value = evalExpr(jsReq, runtime, inputs, self, valueFrom.getExpression());
+                    } catch (Exception e) {
+                        // for some scatter case, we should delay this evaluation, refer to issue #36
                     }
                 }
             }

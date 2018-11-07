@@ -43,7 +43,7 @@ public abstract class CWLParameter {
     private Object value;
     // only for scatter case, refer to issue #36
     private Object self;
-    private String valueFromExpr;
+    private String delayedValueFromExpr;
 
     /**
      * Returns the ID of this parameter
@@ -226,11 +226,11 @@ public abstract class CWLParameter {
         this.self = self;
     }
 
-    public String getValueFromExpr() {
-        return valueFromExpr;
+    public String getDelayedValueFromExpr() {
+        return delayedValueFromExpr;
     }
 
-    public void setValueFromExpr(String valueFromExpr) {
-        this.valueFromExpr = valueFromExpr;
+    public void setDelayedValueFromExpr(String valueFromExpr) {
+        this.delayedValueFromExpr = valueFromExpr;
     }
 }

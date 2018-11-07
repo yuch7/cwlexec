@@ -669,16 +669,13 @@ public final class CommandUtil {
             inputType = new StringType();
         }
         // refer to issue #36
-        if (input.getValueFromExpr() != null) {
-            inputValue = StepInValueFromEvaluator.evalExpr(jsReq, runtime, inputs, input.getSelf(), input.getValueFromExpr());
-            Object value = input.getValue();
-            if (value == null) {
-                List<Object> values = new ArrayList<Object>();
-                values.add(inputValue);
-                input.setValue(values);
-            } else if (value instanceof List<?>) {
-                ((List<Object>) value).add(inputValue);
-            }
+        if (input.getDelayedValueFromExpr() != null) {
+            inputValue = StepInValueFromEvaluator.evalExpr(jsReq,
+                    runtime,
+                    inputs,
+                    input.getSelf(),
+                    input.getDelayedValueFromExpr());
+            ((List<Object>) input.getValue()).add(inputValue);
         }
         if (inputValue != null && inputValue != NullValue.NULL) {
             logger.debug("The input (id={}, type={}, value={}) of step {}",

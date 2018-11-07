@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLParameter;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLType;
+import com.ibm.spectrumcomputing.cwl.model.process.parameter.CWLTypeSymbol;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.input.WorkflowStepInput;
 import com.ibm.spectrumcomputing.cwl.model.process.parameter.method.ScatterMethod;
 import com.ibm.spectrumcomputing.cwl.model.process.requirement.InlineJavascriptRequirement;
@@ -56,6 +58,8 @@ public class StepInValueFromEvaluator {
      *            A CWL step process object
      * @param srcParam
      *            The input of the CWL step process
+     * @param targetInput
+     *            The corresponding command/expression input
      * @return The value of the expression
      * @throws CWLException
      *             Failed to evaluate the expression
@@ -65,11 +69,17 @@ public class StepInValueFromEvaluator {
             List<CWLParameter> inputs,
             Object self,
             WorkflowStep step,
-            WorkflowStepInput srcParam) throws CWLException {
+            WorkflowStepInput srcParam,
+            CWLParameter targetInput) throws CWLException {
         CWLFieldValue valueFrom = srcParam.getValueFrom();
         Object value = null;
         if (valueFrom != null) {
-            value = evalValue(jsReq, runtime, self, step, srcParam, inputs, valueFrom);
+            value = evalValue(jsReq, runtime, self, step, srcParam, targetInput, inputs, valueFrom);
+        }
+        // There is a JS engine bug, cast double to integer if necessary
+        CWLType type = targetInput.getType().getType();
+        if (CWLTypeSymbol.INT == type.getSymbol() && value instanceof Double) {
+            value = Long.valueOf((((Double) value).longValue()));
         }
         return value;
     }
@@ -113,53 +123,53 @@ public class StepInValueFromEvaluator {
             Object self,
             WorkflowStep step,
             WorkflowStepInput stepInput,
+            CWLParameter targetInput,
             List<CWLParameter> inputs,
             CWLFieldValue valueFrom) throws CWLException {
         Object value = valueFrom.getValue();
         if (value == null) {
-            if (inScatter(step, stepInput.getId())) {
-                @SuppressWarnings("unchecked")
-                List<Object> scatters = (List<Object>) self;
-                List<Object> values = new ArrayList<>();
-                for (Object scatter : scatters) {
-                    values.add(evalExpr(jsReq, runtime, inputs, scatter, valueFrom.getExpression()));
-                }
-                value = values;
-            } else {
-                String dependentScatter = findDependentScatterInput(step, valueFrom.getExpression());
-                if (dependentScatter != null) {
-                    value = evalExprWithScatter(stepInput.getId(), dependentScatter, step);
+            if (step.getScatter() != null) {
+                if (step.getScatter().contains(stepInput.getId())) {
+                    @SuppressWarnings("unchecked")
+                    List<Object> scatters = (List<Object>) self;
+                    List<Object> values = new ArrayList<>();
+                    for (Object scatter : scatters) {
+                        values.add(evalExpr(jsReq, runtime, inputs, scatter, valueFrom.getExpression()));
+                    }
+                    value = values;
                 } else {
-                    try {
-                        value = evalExpr(jsReq, runtime, inputs, self, valueFrom.getExpression());
-                    } catch (Exception e) {
-                        // for some scatter case, we should delay this evaluation, refer to issue #36
+                    CWLFieldValue valueFromExpr = stepInput.getValueFrom();
+                    if (valueFromExpr != null) {
+                        value = getValueFromRecordSource(self, step, stepInput);
+                        if (value == null) {
+                            // put off this evaluation, refer to issue #36
+                            targetInput.setSelf(self);
+                            targetInput.setDelayedValueFromExpr(valueFromExpr.getExpression());
+                            value = new ArrayList<Object>();
+                        }
                     }
                 }
+            } else {
+                value = evalExpr(jsReq, runtime, inputs, self, valueFrom.getExpression());
             }
         }
         return value;
     }
 
-    private static boolean inScatter(WorkflowStep step, String stepInputId) {
-        return (step.getScatter() == null ? false : step.getScatter().contains(stepInputId));
-    }
-
-    private static String findDependentScatterInput(WorkflowStep step, String expr) {
-        String dependentScatter = null;
-        List<String> scatter = step.getScatter();
-        if (scatter != null) {
-            for (String scatterId : scatter) {
-                if (expr.startsWith("$(inputs") && expr.contains(scatterId)) {
-                    dependentScatter = scatterId;
-                    break;
-                }
+    // Only handle the single evaluation expression, e.g. $(inputs.var1)
+    // see: test/integration-test/v1.0/scatter-valuefrom-wf5.cwl 
+    private static Object getValueFromRecordSource(Object self, WorkflowStep step, WorkflowStepInput stepInput) {
+        Object value = null;
+        for (String scatterId : step.getScatter()) {
+            String expr = stepInput.getValueFrom().getExpression();
+            if (expr.startsWith("$(inputs") && expr.contains("inputs." + scatterId)) {
+                return scatterInput(stepInput.getId(), scatterId, step);
             }
         }
-        return dependentScatter;
+        return value;
     }
 
-    private static Object evalExprWithScatter(String stepInputId, String dependentScatter, WorkflowStep step) {
+    private static Object scatterInput(String stepInputId, String dependentScatter, WorkflowStep step) {
         Object value = null;
         CWLParameter targetParam = CommonUtil.findParameter(dependentScatter, step.getRun().getInputs());
         if (targetParam != null) {

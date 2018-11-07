@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.StepInValueFromEvaluator;
-import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLInstance;
@@ -209,17 +208,15 @@ public class CWLStepBindingResolver {
         List<CWLParameter> inputs = getStepInputParameters(parent, step);
         
         Object self = toStepInputSelf(sourceValues);
-        Object valueFrom = StepInValueFromEvaluator.eval(jsReq, parent.getRuntime(), inputs,
-               self, step, stepInput);
+        Object valueFrom = StepInValueFromEvaluator.eval(jsReq,
+                parent.getRuntime(),
+                inputs,
+                self,
+                step,
+                stepInput,
+                runInputParam);
         if (valueFrom != null) {
             runInputParam.setValue(valueFrom);
-        } else {
-            // refer to issue #36
-            CWLFieldValue valueFromExpr = stepInput.getValueFrom();
-            if (valueFromExpr != null) {
-                runInputParam.setSelf(self);
-                runInputParam.setValueFromExpr(valueFromExpr.getExpression());
-            }
         }
     }
 
@@ -483,14 +480,14 @@ public class CWLStepBindingResolver {
         } catch (CWLException e) {
             return false;
         }
-        Object valueFrom = StepInValueFromEvaluator.eval(jsReq, parent.getRuntime(), inputs,
-                toStepInputSelf(sourceValues), step, stepInput);
+        Object valueFrom = StepInValueFromEvaluator.eval(jsReq,
+                parent.getRuntime(),
+                inputs,
+                toStepInputSelf(sourceValues),
+                step,
+                stepInput,
+                runInputParam);
         if (valueFrom != null) {
-            // cast double to int if necessary
-            CWLType type = runInputParam.getType().getType();
-            if (CWLTypeSymbol.INT.equals(type.getSymbol()) && valueFrom instanceof Double) {
-                valueFrom = Long.valueOf((((Double) valueFrom).longValue()));
-            }
             runInputParam.setValue(valueFrom);
         }
         return true;

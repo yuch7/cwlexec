@@ -41,8 +41,8 @@ which cwlexec >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     log "cwlexec is required."
 fi
-log "cwlexec (`which cwlexec`) is ready."
-
+cwlexec_version=`cwlexec -v 2>&1`
+log "cwlexec $cwlexec_version (`which cwlexec`) is ready."
 if [ "$1"x = "--with-cleanup"x ]; then
     log "cleanup cwlexec workdir and database dir ..."
     rm -rf ~/.cwlexec
@@ -108,6 +108,7 @@ if [ $exitcode -ne 252 ]; then
     log "Failed to run required_args.cwl with $exitcode."
     exit 1
 fi
+log "required_args test passed."
 
 log "Start h3agatk-simulator Test ..."
 rm -rf h3agatk-simulator-output
@@ -119,6 +120,7 @@ if [ $exitcode -ne 0 ]; then
     exit 1
 fi
 rm -rf h3agatk-simulator-output
+log "h3agatk-simulator test passed."
 
 log "Start Exit Code Test ..."
 cwlexec integration/exitcode-workflow.cwl#main integration/exitcode-workflow-job.yml 2>/dev/null
@@ -128,6 +130,7 @@ if [ $exitcode -ne 3 ]; then
     exit 1
 fi
 rm -rf exitcode-workflow-*
+log "Exit Code Test passed."
 
 # rerun flow
 # 1st try exit with 2 as expected.
@@ -143,7 +146,7 @@ if [ $exitcode -ne 2 ]; then
     exit 1
 fi
 sed -i 's/"2"/"0"/g' ${INTEGRATION_RERUN_HOME}/step2.cwl
-cwlexec -r $workflowid
+cwlexec -r $workflowid >/dev/null 2>&1
 exitcode=$?
 sed -i 's/"0"/"2"/g' ${INTEGRATION_RERUN_HOME}/step2.cwl
 sed -i "s:$INTEGRATION_RERUN_HOME:\${INTEGRATION_RERUN_HOME}:g" ${INTEGRATION_RERUN_HOME}/step*.cwl
@@ -152,11 +155,12 @@ if [ $exitcode -ne 0 ]; then
     log "Failed to run rerun test, rerun rerun-wf.cwl expect exit code 0, but got $exitcode."
     exit 1
 fi
+log "Rerun Test passed."
 
 log "Start Post Failure Test ..."
 INTEGRATION_POSTFAILURE_HOME=`pwd`/integration/post-failure
 sed -i "s:\${INTEGRATION_POSTFAILURE_HOME}:$INTEGRATION_POSTFAILURE_HOME:g" ${INTEGRATION_POSTFAILURE_HOME}/*.json
-cwlexec -c $INTEGRATION_POSTFAILURE_HOME/post_failure-conf.json $INTEGRATION_POSTFAILURE_HOME/post_failure-wf.cwl
+cwlexec -c $INTEGRATION_POSTFAILURE_HOME/post_failure-conf.json $INTEGRATION_POSTFAILURE_HOME/post_failure-wf.cwl >/dev/null 2>&1
 exitcode=$?
 sed -i "s:$INTEGRATION_POSTFAILURE_HOME:\${INTEGRATION_POSTFAILURE_HOME}:g" ${INTEGRATION_POSTFAILURE_HOME}/*.json
 rm -rf post_failure-wf-*
@@ -164,5 +168,6 @@ if [ $exitcode -ne 0 ]; then
     log "Failed to run post failure test, postfailure workflow exit with $exitcode."
     exit 1
 fi
+log "Post Failure Test passed."
 
-log "All of tests are passed."
+log "All of tests passed."

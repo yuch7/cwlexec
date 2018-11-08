@@ -86,11 +86,11 @@ echo -e "All tests [${_test_count}/8] passed."
 log "Start Scatter Test ..."
 ./run.scatter.sh >/dev/null 2>&1
 _test_count=$?
-if [ $_test_count -ne 9 ]; then
+if [ $_test_count -ne 11 ]; then
     log "Failed to run scatter test [$(($_test_count + 1))]"
     exit 1
 fi
-echo -e "All tests [${_test_count}/9] passed"
+echo -e "All tests [${_test_count}/11] passed"
 
 log "Start Issue Test ..."
 ./run.issues.sh >/dev/null 2>&1

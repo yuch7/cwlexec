@@ -131,14 +131,40 @@ public final class CommandUtil {
             InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
             Map<String, String> runtime = instance.getRuntime();
             InputsEvaluator.eval(jsReq, runtime, totalInputs);
-            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdin());
-            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStderr());
-            CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdout());
+            // refer to issue #36 and #37
+            if (!needToPutOff(totalInputs)) {
+                CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdin());
+                CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStderr());
+                CommandStdIOEvaluator.eval(jsReq, runtime, totalInputs, commandLineTool.getStdout());
+            }
             scatterHolder.setScatterIndex(i + 1);
             scatterHolder.setInputs(totalInputs);
             scatterHolder.setCommand(buildCommand(instance, totalInputs, scatterHolder.getScatterIndex()));
             instance.getScatterHolders().add(scatterHolder);
         }
+    }
+
+    private static boolean needToPutOff(List<CommandInputParameter> totalInputs) {
+        for (CommandInputParameter input : totalInputs) {
+            if (input.getDelayedValueFromExpr() != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<CommandInputParameter> copyInputs(List<CommandInputParameter> inputs, Object value) {
+        List<CommandInputParameter> copied = new ArrayList<>();
+        for (CommandInputParameter input : inputs) {
+            if (input.getDelayedValueFromExpr() != null) {
+                CommandInputParameter copiedInput = new CommandInputParameter(input.getId());
+                copiedInput.setValue(value);
+                copied.add(copiedInput);
+            } else {
+                copied.add(input);
+            }
+        }
+        return copied;
     }
 
     private static List<String> buildCommand(CWLCommandInstance instance,
@@ -668,7 +694,7 @@ public final class CommandUtil {
         if (inputValue instanceof String && inputType.getSymbol() != CWLTypeSymbol.STRING) {
             inputType = new StringType();
         }
-        // refer to issue #36
+        // refer to issue #36 and #37
         if (input.getDelayedValueFromExpr() != null) {
             inputValue = StepInValueFromEvaluator.evalExpr(jsReq,
                     runtime,
@@ -676,6 +702,10 @@ public final class CommandUtil {
                     input.getSelf(),
                     input.getDelayedValueFromExpr());
             ((List<Object>) input.getValue()).add(inputValue);
+            CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStdin());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStderr());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStdout());
         }
         if (inputValue != null && inputValue != NullValue.NULL) {
             logger.debug("The input (id={}, type={}, value={}) of step {}",

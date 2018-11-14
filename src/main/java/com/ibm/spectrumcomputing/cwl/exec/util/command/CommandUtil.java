@@ -153,12 +153,13 @@ public final class CommandUtil {
         return false;
     }
 
-    private static List<CommandInputParameter> copyInputs(List<CommandInputParameter> inputs, Object value) {
+    @SuppressWarnings("unchecked")
+    private static List<CommandInputParameter> copyInputs(List<CommandInputParameter> inputs, int scatterIndex) {
         List<CommandInputParameter> copied = new ArrayList<>();
         for (CommandInputParameter input : inputs) {
             if (input.getDelayedValueFromExpr() != null) {
                 CommandInputParameter copiedInput = new CommandInputParameter(input.getId());
-                copiedInput.setValue(value);
+                copiedInput.setValue(((List<Object>) input.getValue()).get(scatterIndex - 1));
                 copied.add(copiedInput);
             } else {
                 copied.add(input);
@@ -187,6 +188,13 @@ public final class CommandUtil {
             commands.addAll(attachCommandBindings(instance, inputs, sorted));
         } else {
             attachCommandBindings(instance, inputs, sorted);
+        }
+        if (needToPutOff(inputs)) {
+            Map<String, String> runtime = instance.getRuntime();
+            InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStdin());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStderr());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStdout());
         }
         // build command stdin
         String stdinPath = buildStdin(instance);
@@ -702,10 +710,6 @@ public final class CommandUtil {
                     input.getSelf(),
                     input.getDelayedValueFromExpr());
             ((List<Object>) input.getValue()).add(inputValue);
-            CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStdin());
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStderr());
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, inputValue), commandLineTool.getStdout());
         }
         if (inputValue != null && inputValue != NullValue.NULL) {
             logger.debug("The input (id={}, type={}, value={}) of step {}",

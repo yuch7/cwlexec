@@ -199,9 +199,11 @@ public class StepInValueFromEvaluator {
                 value = r.asCWLFile();
             } else if (r.isCWLDirectory()) {
                 value = r.asCWLDirectory();
+            } else if (r.isBool()) {
+                value = r.asBool();
             } else {
                 // other type is not handled yet
-                logger.debug("ValueFrom type ({}) is not handled", r);
+                logger.warn("ValueFrom type ({}) is not handled yet.", r.getType());
             }
         }
         return value;

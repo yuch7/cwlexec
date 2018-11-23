@@ -154,13 +154,30 @@ public final class CommandUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<CommandInputParameter> copyInputs(List<CommandInputParameter> inputs, int scatterIndex) {
+    private static List<CommandInputParameter> copyInputs(CWLCommandInstance instance,
+            List<CommandInputParameter> inputs,
+            int scatterIndex) throws CWLException {
         List<CommandInputParameter> copied = new ArrayList<>();
         for (CommandInputParameter input : inputs) {
             if (input.getDelayedValueFromExpr() != null) {
-                CommandInputParameter copiedInput = new CommandInputParameter(input.getId());
-                copiedInput.setValue(((List<Object>) input.getValue()).get(scatterIndex - 1));
-                copied.add(copiedInput);
+                Object value = input.getValue();
+                if (value instanceof List<?>) {
+                    CommandInputParameter copiedInput = new CommandInputParameter(input.getId());
+                    if (((List<?>) value).size() < scatterIndex) {
+                        // The input may be not evaluated, refer to #39
+                        Object inputValue = StepInValueFromEvaluator.evalExpr(
+                                CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class),
+                                instance.getRuntime(),
+                                inputs,
+                                input.getSelf(),
+                                input.getDelayedValueFromExpr());
+                        copiedInput.setValue(inputValue);
+                        ((List<Object>) value).add(inputValue);
+                    } else {
+                        copiedInput.setValue(((List<?>) value).get(scatterIndex - 1));
+                    }
+                    copied.add(copiedInput);
+                }
             } else {
                 copied.add(input);
             }
@@ -192,9 +209,10 @@ public final class CommandUtil {
         if (needToPutOff(inputs)) {
             Map<String, String> runtime = instance.getRuntime();
             InlineJavascriptRequirement jsReq = CWLExecUtil.findRequirement(instance, InlineJavascriptRequirement.class);
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStdin());
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStderr());
-            CommandStdIOEvaluator.eval(jsReq, runtime, copyInputs(inputs, scatterIndex), commandLineTool.getStdout());
+            List<CommandInputParameter> copiedInputs = copyInputs(instance, inputs, scatterIndex);
+            CommandStdIOEvaluator.eval(jsReq, runtime, copiedInputs, commandLineTool.getStdin());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copiedInputs, commandLineTool.getStderr());
+            CommandStdIOEvaluator.eval(jsReq, runtime, copiedInputs, commandLineTool.getStdout());
         }
         // build command stdin
         String stdinPath = buildStdin(instance);

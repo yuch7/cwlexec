@@ -1,0 +1,9 @@
+input_files:
+  - class: File
+    path: ./data/input1.txt
+  - class: File
+    path: ./data/input2.txt
+reffa:
+    class: File
+    path: ./data/reference/GRCh37-lite/GRCh37-lite.fa
+threads: 2

@@ -86,11 +86,11 @@ echo -e "All tests [${_test_count}/8] passed."
 log "Start Scatter Test ..."
 ./run.scatter.sh >/dev/null 2>&1
 _test_count=$?
-if [ $_test_count -ne 12 ]; then
+if [ $_test_count -ne 13 ]; then
     log "Failed to run scatter test [$(($_test_count + 1))]"
     exit 1
 fi
-echo -e "All tests [${_test_count}/12] passed"
+echo -e "All tests [${_test_count}/13] passed."
 
 log "Start Issue Test ..."
 ./run.issues.sh >/dev/null 2>&1
@@ -108,7 +108,7 @@ if [ $exitcode -ne 252 ]; then
     log "Failed to run required_args.cwl with $exitcode."
     exit 1
 fi
-log "required_args test passed."
+echo -e "Test passed."
 
 log "Start h3agatk-simulator Test ..."
 rm -rf h3agatk-simulator-output
@@ -120,7 +120,7 @@ if [ $exitcode -ne 0 ]; then
     exit 1
 fi
 rm -rf h3agatk-simulator-output
-log "h3agatk-simulator test passed."
+echo -e "Test passed."
 
 log "Start Exit Code Test ..."
 cwlexec integration/exitcode-workflow.cwl#main integration/exitcode-workflow-job.yml 2>/dev/null
@@ -130,7 +130,7 @@ if [ $exitcode -ne 3 ]; then
     exit 1
 fi
 rm -rf exitcode-workflow-*
-log "Exit Code Test passed."
+echo -e "Test passed."
 
 # rerun flow
 # 1st try exit with 2 as expected.
@@ -155,7 +155,7 @@ if [ $exitcode -ne 0 ]; then
     log "Failed to run rerun test, rerun rerun-wf.cwl expect exit code 0, but got $exitcode."
     exit 1
 fi
-log "Rerun Test passed."
+echo -e "Test passed."
 
 log "Start Post Failure Test ..."
 INTEGRATION_POSTFAILURE_HOME=`pwd`/integration/post-failure
@@ -168,6 +168,6 @@ if [ $exitcode -ne 0 ]; then
     log "Failed to run post failure test, postfailure workflow exit with $exitcode."
     exit 1
 fi
-log "Post Failure Test passed."
+echo -e "Test passed."
 
 log "All of tests passed."

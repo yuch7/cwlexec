@@ -215,7 +215,9 @@ public final class CommandUtil {
             CommandStdIOEvaluator.eval(jsReq, runtime, copiedInputs, commandLineTool.getStdout());
         }
         // build command stdin
-        String stdinPath = buildStdin(instance);
+        DockerRequirement dockerReq = CWLExecUtil.findRequirement(instance, DockerRequirement.class);
+        
+        String stdinPath = buildStdin(instance, dockerReq);
         if (stdinPath != null) {
             commands = Arrays.asList(String.format("%s < %s", String.join(" ", commands), stdinPath));
         }
@@ -227,7 +229,6 @@ public final class CommandUtil {
             commands = quoteShellCommand(commands);
             logger.debug("Has Shell Command, build commands as:\n{}", commands);
         }
-        DockerRequirement dockerReq = CWLExecUtil.findRequirement(instance, DockerRequirement.class);
         if (dockerReq != null) {
             commands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, commands);
             logger.debug("Has DockerRequirement, build commands as:\n{}", commands);
@@ -243,19 +244,25 @@ public final class CommandUtil {
 
     private static List<String> quoteShellCommand(List<String> commands) {
         List<String> quotedCommands = new ArrayList<>();
+        List<String> shellCommands = new ArrayList<>(); 
         if (commands.size() > 2 &&
                 (commands.get(0).equals("/bin/sh") ||
                         commands.get(0).equals("/bin/bash") ||
                         commands.get(0).equals("sh")) &&
                  commands.get(1).equals("-c")) {
-            List<String> shellCommands = new ArrayList<>();
             for (int i = 2; i < commands.size(); i++) {
                 shellCommands.add(commands.get(i));
             }
             quotedCommands.add(commands.get(0));
             quotedCommands.add(commands.get(1));
             quotedCommands.add(quoteCommand(shellCommands));
-        } else {
+        } else if(commands.size() > 1 && commands.get(0).equals("-c")) {
+        	//Fix docker-run-command.cwl
+        	quotedCommands.add(commands.get(0));
+        	shellCommands.add(commands.get(1));
+        	quotedCommands.add(quoteCommand(shellCommands));
+        }
+        else {
             quotedCommands.addAll(commands);
         }
         return quotedCommands;
@@ -294,7 +301,12 @@ public final class CommandUtil {
     private static String quoteCommand(List<String> commands) {
         String quoted = null;
         if (commands != null) {
-            quoted = String.format("'%s'", String.join(" ", commands).replaceAll("'", "'\"'\"'"));
+        	String arg = String.join(" ", commands);
+        	//Fix envvar3.cwl issue, not add duplicated quota
+			if (arg.startsWith("'") && arg.endsWith("'")) {
+			    return arg;
+			}
+            quoted = String.format("'%s'", arg.replaceAll("'", "'\"'\"'"));
         }
         return quoted;
     }
@@ -645,6 +657,10 @@ public final class CommandUtil {
         if (valueFromExpr != null) {
             if (valueFromExpr.getExpression() != null) {
                 String arg = CommandLineBindingEvaluator.evalValueFrom(jsReq, runtime, inputs, null, argument);
+                //Resolve inline-js.cwl issue
+                if(arg == null) {
+                	return;
+                }
                 String[] splitArgs = arg.split(CommandLineBindingEvaluator.DEFAULT_ITEM_SEPARATOR);
                 if (splitArgs.length > 1) {
                     prefixedArg = addPrefix(argument.getPrefix(), splitArgs);
@@ -803,6 +819,10 @@ public final class CommandUtil {
             Map<String, String> runtime,
             Object self,
             List<CommandInputParameter> inputs) throws CWLException {
+    	//Resolve vf-concat.cwl issue
+    	if(self == NullValue.NULL) {
+    		return null;
+    	}
         String valueFrom = null;
         CommandLineBinding inputBinding = input.getInputBinding();
         CWLFieldValue valueFromExpr = inputBinding.getValueFrom();
@@ -1052,7 +1072,7 @@ public final class CommandUtil {
         }
     }
 
-    private static String buildStdin(CWLCommandInstance instance) throws CWLException {
+    private static String buildStdin(CWLCommandInstance instance, DockerRequirement dockerReq) throws CWLException {
         String stdinLocation = null;
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         CWLFieldValue stdinExpr = commandLineTool.getStdin();
@@ -1065,16 +1085,20 @@ public final class CommandUtil {
                             stdinPath.toString());
                 }
                 if (stdinPath.toFile().exists()) {
-                    Map<String, String> runtimeEnv = instance.getRuntime();
-                    Path workStdinPath = Paths.get(runtimeEnv.get(CommonUtil.RUNTIME_TMP_DIR),
-                            stdinPath.getFileName().toString());
-                    if (!workStdinPath.toFile().exists()) {
-                        IOUtil.copy(instance.getOwner(), stdinPath, workStdinPath);
-                        logger.debug("Copy stdin {} to {}", stdinPath, workStdinPath);
-                    } else {
-                        logger.debug("Map stdin {} to {}", stdinPath, workStdinPath);
+                	stdinLocation = stdinPath.toFile().getAbsolutePath();
+                	if(dockerReq != null) {
+                		Map<String, String> runtimeEnv = instance.getRuntime();
+                        Path workStdinPath = Paths.get(runtimeEnv.get(CommonUtil.RUNTIME_TMP_DIR),
+                                stdinPath.getFileName().toString());                        	
+                    
+	                    if (!workStdinPath.toFile().exists()) {
+	                        IOUtil.copy(instance.getOwner(), stdinPath, workStdinPath);
+	                        logger.debug("Copy stdin {} to {}", stdinPath, workStdinPath);
+	                    } else {
+	                        logger.debug("Map stdin {} to {}", stdinPath, workStdinPath);
+	                    }
+	                    stdinLocation = workStdinPath.toString();
                     }
-                    stdinLocation = workStdinPath.toString();
                 } else {
                     throw new CWLException(String.format("The stdin (%s) does not exist", stdin), 255);
                 }

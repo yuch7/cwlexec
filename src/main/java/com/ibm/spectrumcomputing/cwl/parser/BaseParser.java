@@ -619,7 +619,8 @@ class BaseParser {
             // secondaryFiles
             JsonNode secondaryFilesNode = fileNode.get("secondaryFiles");
             if (secondaryFilesNode != null && secondaryFilesNode.isArray()) {
-                cwlFile.setSecondaryFiles(toSecondaryFiles(id, cwlFile, secondaryFilesNode, nochecksum));
+            	//Resolve dir4.cwl v1.0/dir4-subdir-2-job.yml
+                cwlFile.setSecondaryFiles(toSecondaryFiles(id, parentPath, secondaryFilesNode, nochecksum));
             }
             // format
             JsonNode formatNode = fileNode.get("format");
@@ -868,7 +869,13 @@ class BaseParser {
             JsonNode contentsNode = fileNode.get("contents");
             if (contentsNode != null && contentsNode.isTextual()) {
                 String contents = contentsNode.asText();
-                Path tmpLocationPath = Paths.get(parentPath, id + "-" + CommonUtil.getRandomStr());
+                //Fix cat-from-dir.cwl and cat3-from-dir.cwl
+                Path tmpLocationPath = null;
+                if( basename == null) {
+                	tmpLocationPath = Paths.get(parentPath, id + "-" + CommonUtil.getRandomStr());                    	
+                } else {
+                	tmpLocationPath = Paths.get(parentPath, basename);
+                }
                 IOUtil.write64Kib(tmpLocationPath.toFile(), contents);
                 location = tmpLocationPath.toString();
             }
@@ -1162,19 +1169,18 @@ class BaseParser {
     }
 
     private static List<CWLFileBase> toSecondaryFiles(String id,
-            CWLFile parent,
+            String parent,
             JsonNode secondaryFilesNode,
             boolean nocecksum) throws CWLException {
         List<CWLFileBase> secondaryFiles = new ArrayList<>();
-        Path path = Paths.get(parent.getPath());
         Iterator<JsonNode> elements = secondaryFilesNode.elements();
         while (elements.hasNext()) {
             JsonNode secondaryFileNode = elements.next();
             String secondaryFileClazz = secondaryFileNode.get(CLASS).asText();
             if (CWLTypeSymbol.FILE.symbol().equals(secondaryFileClazz)) {
-                secondaryFiles.add(processCWLFile(path.getParent().toString(), id, secondaryFileNode, nocecksum));
+                secondaryFiles.add(processCWLFile(parent, id, secondaryFileNode, nocecksum));
             } else if (CWLTypeSymbol.DIRECTORY.symbol().equals(secondaryFileClazz)) {
-                secondaryFiles.add(processCWLDirectory(path.getParent().toString(), id, secondaryFileNode, nocecksum));
+                secondaryFiles.add(processCWLDirectory(parent, id, secondaryFileNode, nocecksum));
             }
         }
         return secondaryFiles;

@@ -113,7 +113,7 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
         }
         String app = addLSFOptionsFromExecConf(instance, commands);
         if (dockerRequirement != null) {
-            commands.addAll(LSFCommandUtil.prepareLSFDocker(app, dockerRequirement, instance));
+            commands.addAll(LSFCommandUtil.prepareLSFDocker(app, dockerRequirement, instance, scatterIndex));
         }
         // The current job is not ready, using -H to hold it
         if (baseCommands == null) {

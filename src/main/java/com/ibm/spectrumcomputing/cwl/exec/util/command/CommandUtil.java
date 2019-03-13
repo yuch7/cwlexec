@@ -230,7 +230,7 @@ public final class CommandUtil {
             logger.debug("Has Shell Command, build commands as:\n{}", commands);
         }
         if (dockerReq != null) {
-            commands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, commands);
+            commands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, commands, scatterIndex);
             logger.debug("Has DockerRequirement, build commands as:\n{}", commands);
         }
         String stdout = buildCommandOut(instance, scatterIndex);

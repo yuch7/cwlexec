@@ -140,7 +140,7 @@ public class StepInValueFromEvaluator {
                 } else {
                     CWLFieldValue valueFromExpr = stepInput.getValueFrom();
                     if (valueFromExpr != null) {
-                        value = getValueFromRecordSource(self, step, stepInput);
+                        value = getValueFromRecordSource(self, step, stepInput, jsReq, runtime);
                         if (value == null) {
                             // put off this evaluation, refer to issue #36
                             targetInput.setSelf(self);
@@ -158,22 +158,42 @@ public class StepInValueFromEvaluator {
 
     // Only handle the single evaluation expression, e.g. $(inputs.var1)
     // see: test/integration-test/v1.0/scatter-valuefrom-wf5.cwl 
-    private static Object getValueFromRecordSource(Object self, WorkflowStep step, WorkflowStepInput stepInput) {
+    private static Object getValueFromRecordSource(Object self, WorkflowStep step, WorkflowStepInput stepInput, 
+    		InlineJavascriptRequirement jsReq, Map<String, String> runtime) throws CWLException {
         Object value = null;
         for (String scatterId : step.getScatter()) {
             String expr = stepInput.getValueFrom().getExpression();
             if (expr.startsWith("$(inputs") && expr.contains("inputs." + scatterId)) {
-                return scatterInput(stepInput.getId(), scatterId, step);
+                return scatterInput(stepInput.getId(), scatterId, step, expr, jsReq, runtime, self);
             }
         }
         return value;
     }
 
-    private static Object scatterInput(String stepInputId, String dependentScatter, WorkflowStep step) {
+	@SuppressWarnings("unchecked")
+	private static Object scatterInput(String stepInputId, String dependentScatter, WorkflowStep step, String expr, 
+    		InlineJavascriptRequirement jsReq, Map<String, String> runtime, Object self) throws CWLException {
         Object value = null;
         CWLParameter targetParam = CommonUtil.findParameter(dependentScatter, step.getRun().getInputs());
         if (targetParam != null) {
             value = targetParam.getValue();
+            if(value instanceof List) {
+            	// Fix scatter parameter issue scatter-valuefrom-inputs-wf1.cwl
+            	List<Object> result = new ArrayList<Object>();          
+            	for(Object v : (List<Object>)value) {
+            		targetParam.setValue(v);
+            		List<CWLParameter> targetParams = new ArrayList<CWLParameter>();
+                    targetParams.add(targetParam);
+                    Object _v = evalExpr(jsReq, runtime, targetParams, self, expr);
+                    if(_v != null) {
+        				result.add(_v);
+                    }
+            	}
+            	if(!result.isEmpty()) {
+            		value = result;	
+            	}
+            	targetParam.setValue(value);
+            }
             step.getScatter().add(stepInputId);
             step.setScatterMethod(ScatterMethod.DOTPRODUCT);
         }

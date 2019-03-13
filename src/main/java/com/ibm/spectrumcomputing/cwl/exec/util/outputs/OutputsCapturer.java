@@ -192,9 +192,7 @@ public class OutputsCapturer {
                         outputType,
                         outputBinding);
             }
-            if (value == null) {
-                throw new CWLException(ResourceLoader.getMessage("cwl.output.value.not.found", output.getId()), 250);
-            }
+            //allow null value for fix count-lines11-null-step-wf.cwl
             output.setValue(value);
         }
     }

@@ -197,10 +197,7 @@ public final class CWLParser {
             JsonNode settingsNode = IOUtil.toJsonNode(inputSettingsFile);
             if (processObj instanceof CommandLineTool || processObj instanceof Workflow) {
                 logger.debug("Apply input settings {}", inputSettingFilePath);
-                List<? extends CWLParameter> inputs = processObj.getInputs();
-                String parentPath = Paths.get(inputSettingFilePath).getParent().toString();
-                InputSettingsParser.processInputSettings(parentPath, settingsNode, inputs);
-                processObj.setInputsPath(inputSettingFilePath);
+                setInputSettings(processObj, inputSettingFilePath, settingsNode);
             } else {
                 throw new CWLException(
                         ResourceLoader.getMessage("cwl.parser.field.unsupported", BaseParser.CLASS,
@@ -217,6 +214,32 @@ public final class CWLParser {
                     252);
         }
     }
+
+	private static void setInputSettings(CWLProcess processObj, String inputSettingFilePath, JsonNode settingsNode)
+			throws CWLException {
+		List<? extends CWLParameter> inputs = processObj.getInputs();
+		//Fix record-output.cwl
+		if (processObj instanceof Workflow) {
+			for (WorkflowStep wfs : ((Workflow) processObj).getSteps()) {
+				for (CWLParameter runInput : wfs.getRun().getInputs()) {
+					for (CWLParameter input : inputs) {
+						if (input.getId().equals(runInput.getId()) 
+								&& input.getType() != null
+								&& runInput.getType() != null
+								&& input.getType().getType()!=null
+								&& runInput.getType().getType()!=null) {
+							if (input.getType().getType().getSymbol() == runInput.getType().getType().getSymbol()) {
+								input.getType().setType(runInput.getType().getType());
+							}
+						}
+					}
+				}
+			}
+		}
+		String parentPath = Paths.get(inputSettingFilePath).getParent().toString();
+		InputSettingsParser.processInputSettings(parentPath, settingsNode, inputs);
+		processObj.setInputsPath(inputSettingFilePath);
+	}
 
     /**
      * Parses a cwlexec execution configuration file

@@ -85,7 +85,11 @@ class JSResultWrapper {
     }
 
     protected String asString() {
-        return (String) this.result;
+    	//Resolve null point error
+    	if (this.result instanceof String) {
+    		return (String) this.result;	
+    	}
+        return "";
     }
 
     protected boolean isCWLFile() {

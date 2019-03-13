@@ -222,7 +222,7 @@ public class CommandBuilderTest extends CWLExecTestBase {
             instance.setRuntimeEnv(RuntimeEnv.LOCAL);
             List<String> commands = CommandUtil.buildCommand(instance);
             DockerRequirement dockerRequirement = CWLExecUtil.findRequirement(instance.getProcess(), DockerRequirement.class);
-            commands = DockerCommandBuilder.buildDockerRun(dockerRequirement, instance, commands);
+            commands = DockerCommandBuilder.buildDockerRun(dockerRequirement, instance, commands, 0);
             assertEquals(24, commands.size());
         } else {
             logger.info("The CommandBuilderTest.buildSecondaryFilesDocker cannot run on the Windows");
@@ -247,7 +247,7 @@ public class CommandBuilderTest extends CWLExecTestBase {
             instance.setRuntimeEnv(RuntimeEnv.LOCAL);
             List<String> commands = CommandUtil.buildCommand(instance);
             DockerRequirement dockerRequirement = CWLExecUtil.findRequirement(instance.getProcess(), DockerRequirement.class);
-            commands = DockerCommandBuilder.buildDockerRun(dockerRequirement, instance, commands);
+            commands = DockerCommandBuilder.buildDockerRun(dockerRequirement, instance, commands, 0);
             assertEquals(14, commands.size());
         } else {
             logger.info("The CommandBuilderTest.buildDocker cannot run on the Windows");

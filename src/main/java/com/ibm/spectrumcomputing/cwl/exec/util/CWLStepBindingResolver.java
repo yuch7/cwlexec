@@ -175,7 +175,15 @@ public class CWLStepBindingResolver {
                         if (srcValue == null) {
                             srcValue = stepOutParam.getDefaultValue();
                         }
-                        sourceValues.add(mapRecordValues(stepOutParam, srcValue));
+                        //Fix count-lines11-null-step-wf-noET.cwl
+                        if (srcValue == null) {
+                            srcValue = stepInput.getDefaultValue();
+                        }
+                        Object recordValues = mapRecordValues(stepOutParam, srcValue);
+                        if (recordValues != null) {
+                        	sourceValues.add(recordValues);	
+                        }
+                        
                     } else {
                         throw new CWLException(
                                 ResourceLoader.getMessage("cwl.workflow.step.not.resolved", stepInstance.getName()),

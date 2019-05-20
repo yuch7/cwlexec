@@ -223,14 +223,15 @@ final class DockerCommandBuilder {
         CWLTypeSymbol inputTypeSymbol = inputType.getSymbol();
         switch (inputTypeSymbol) {
         case FILE:
-        	if(value instanceof List) {
-        		List<CWLFile> fileArray = (List<CWLFile>) value;
-        		for (CWLFile f : fileArray) {
+            if(value instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<CWLFile> fileArray = (List<CWLFile>) value;
+                for (CWLFile f : fileArray) {
                     files.add(f);
                 }
-        	} else {
-        		files.add((CWLFile) value);
-        	}
+            } else {
+                files.add((CWLFile) value);
+            }
             break;
         case DIRECTORY:
             files.add((CWLDirectory) value);

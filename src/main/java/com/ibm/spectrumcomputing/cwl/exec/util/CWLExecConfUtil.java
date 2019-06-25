@@ -113,6 +113,34 @@ public final class CWLExecConfUtil {
     }
 
     /**
+     * Finds the number of processors configuration argument from a given FlowExecConf
+     * object by a CWL Workflow step name
+     *
+     * @param flowExecConf
+     *            A FlowExecConf object
+     * @param stepName
+     *            The name of a CWL workflow step
+     * @return If the configuration argument is not found, a null value will be
+     *         returned
+     */
+    public static String getProcessors(FlowExecConf flowExecConf, String stepName) {
+	String processors = null;
+	if (flowExecConf != null && stepName != null) {
+	    processors = flowExecConf.getProcessors();
+	    if (flowExecConf.getSteps() != null) {
+		StepExecConf stepExecConf = flowExecConf.getSteps().get(stepName);
+		if (stepExecConf != null) {
+		    String stepProcessors = stepExecConf.getProcessors();
+		    if (stepProcessors != null) {
+			processors = stepProcessors;
+		    }
+		}
+	    }
+	}
+	return processors;
+    }
+	    
+    /**
      * Finds the project configuration argument from a given FlowExecConf object
      * by a CWL Workflow step name
      * 

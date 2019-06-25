@@ -25,6 +25,7 @@ public class StepExecConf {
     private boolean rerunnable;
     private String app;
     private String resource;
+    private String processors;
     private PostFailureScript pfscript;
 
     /**
@@ -121,7 +122,23 @@ public class StepExecConf {
     public void setRerunnable(boolean rerunnable) {
         this.rerunnable = rerunnable;
     }
-
+    /**
+     * Returns the LSF processors (-n) option
+     *
+     * @return the LSF processors option
+     */
+    public String getProcessors() {
+        return processors;
+    }
+    /**
+     * Sets the LSF processors (-n) option
+     *
+     * @param processors
+     *        The LSF processors requirement option
+     */
+    public void setProcessors(String processors) {
+        this.processors = processors;
+    }
     /**
      * Returns a post failure script configuration for a given step
      * 

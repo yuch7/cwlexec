@@ -20,9 +20,9 @@ Before downloading the package, make sure you installed [IBM Spectrum LSF 10.1.0
 Download the latest release package from https://github.com/IBMSpectrumComputing/cwlexec/releases and extract the package.
 
 ```
-tar xzvf cwlexec-0.2.1.tar.gz
+tar xzvf cwlexec-0.2.2.tar.gz
 ```
-Add the extracted directory `cwlexec-0.2.1` with the `cwlexec` command to the `PATH` environment variable.
+Add the extracted directory `cwlexec-0.2.2` with the `cwlexec` command to the `PATH` environment variable.
 
 ## Run
 Make sure that you sourced the LSF environment, then run `cwlexec` or `cwlexec -h` to view help.
@@ -39,7 +39,7 @@ git clone https://github.com/IBMSpectrumComputing/cwlexec.git # Clone cwlexec re
 cd cwlexec         # Switch to source directory
 mvn package        # build package
 ```
-After the build, the `cwlexec-0.2.1.tar.gz` package is generated in the `target` directory.
+After the build, the `cwlexec-0.2.2.tar.gz` package is generated in the `target` directory.
 
 
 ## Test
@@ -71,6 +71,7 @@ cwlexec -c myconfig.json myflow.cwl myinput.yml
 |project|	String|	Specify the LSF project option `–P <project>`|
 |rerunnable|	Boolean|		Specify the LSF rerunnable option `-r`|
 |app|	String|		Specify the LSF app option `–app <application>`|
+|processors|String|Specify the the number of tasks in the LSF job, it is same as `bsub –n <the number of tasks in the job>`|
 |res_req|	String|		Specify the LSF resource option `–R res_req`. Beware that this option will override the `ResourceRequirement` defined. If `res_req` is not specified in exec-config, LSF using following syntax for `ResourceRequirement` specification<br>coresMin:`bsub -n`<br>coresMax:`bsub –n coresMin,coresMax`<br>ramMin:`bsub –R mem>ramMin`<br>ramMax:`bsub –M ramMax`|
 
 The configuration file suppports workflow level and step level settings:

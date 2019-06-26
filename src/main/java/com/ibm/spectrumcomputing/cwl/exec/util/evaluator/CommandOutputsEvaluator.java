@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.ibm.spectrumcomputing.cwl.exec.util.evaluator.JSResultWrapper.ResultType;
 import com.ibm.spectrumcomputing.cwl.model.CWLFieldValue;
 import com.ibm.spectrumcomputing.cwl.model.exception.CWLException;
 import com.ibm.spectrumcomputing.cwl.model.instance.CWLCommandInstance;
@@ -138,7 +139,12 @@ public final class CommandOutputsEvaluator extends CommandEvaluator {
     }
 
     private static Object evalExpressionValue(JSResultWrapper r, String owner, CWLType outputType, String outputId, Path tmpDir, boolean inArray) throws CWLException {
-
+        if (r.getType() == ResultType.OBJECT) {
+            JSResultWrapper obj = r.getValue(outputId);
+            if (obj != null) {
+                r = obj;
+            }
+        }
     	if (outputType.getSymbol() == CWLTypeSymbol.DIRECTORY || outputType.getSymbol() == CWLTypeSymbol.FILE) {
 			JSResultWrapper rs = inArray?r:r.getValue(outputId);
 			if(rs.isCWLFile()) {

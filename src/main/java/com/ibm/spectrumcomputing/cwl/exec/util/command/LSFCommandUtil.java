@@ -148,12 +148,12 @@ public class LSFCommandUtil {
      */
     public static List<String> prepareLSFDocker(String app,
             DockerRequirement dockerReq,
-            CWLCommandInstance instance) throws CWLException {
+            CWLCommandInstance instance, int scatterIndex) throws CWLException {
         List<String> commands = null;
         if ((app != null && app.length() > 0) && instance.isReadyToRun()) {
-            commands = prepareLSFDockerByApp(dockerReq, instance);
+            commands = prepareLSFDockerByApp(dockerReq, instance, scatterIndex);
         } else {
-            commands = prepatedLSFDockerByRes(dockerReq, instance);
+            commands = prepatedLSFDockerByRes(dockerReq, instance, scatterIndex);
         }
         if (logger.isDebugEnabled()) {
             logger.debug("Prepare LSF docker run as\n{}", CWLExecUtil.asPrettyCommandStr(commands));
@@ -184,7 +184,7 @@ public class LSFCommandUtil {
     }
 
     private static List<String> prepareLSFDockerByApp(DockerRequirement dockerReq,
-            CWLCommandInstance instance) throws CWLException {
+            CWLCommandInstance instance, int scatterIndex) throws CWLException {
         List<String> commands = new ArrayList<>();
         String imageId = dockerReq.getDockerImageId();
         if (imageId == null) {
@@ -197,7 +197,7 @@ public class LSFCommandUtil {
             }
         }
         String env = "LSB_CONTAINER_IMAGE=" + imageId;
-        List<String> dockerCommands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, null);
+        List<String> dockerCommands = DockerCommandBuilder.buildDockerRun(dockerReq, instance, null, scatterIndex);
         if (!dockerCommands.isEmpty()) {
             StringBuilder option = new StringBuilder();
             for (String command : dockerCommands) {
@@ -216,7 +216,7 @@ public class LSFCommandUtil {
     }
 
     private static List<String> prepatedLSFDockerByRes(DockerRequirement dockerReq,
-            CWLCommandInstance instance) throws CWLException {
+            CWLCommandInstance instance, int scatterIndex) throws CWLException {
         List<String> commands = new ArrayList<>();
         if (DockerCommandBuilder.hasDockerImage(dockerReq)) {
             return commands;
@@ -229,6 +229,10 @@ public class LSFCommandUtil {
             }
         }
         String dockerFileDir = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR)).toString();
+        if (scatterIndex > 0) {
+            // scatter job
+        	dockerFileDir = dockerFileDir + File.separator + String.format("scatter%d", scatterIndex);
+        }
         String tag = "";
         if (dockerReq.getDockerFile() != null) {
             IOUtil.write(new File(dockerFileDir + "/Dockerfile"), dockerReq.getDockerFile());

@@ -437,7 +437,7 @@ final class LSFBwaitExecutorTask implements Runnable {
         // Fill out the wait result
         List<String> commands = LSFCommandUtil.buildScatterWaitJobCommmand(instance, waitCode);
         instance.setCommands(commands);
-        Path placeholder = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), instance.getName());
+        Path placeholder = Paths.get(instance.getRuntime().get(CommonUtil.RUNTIME_TMP_DIR), instance.getName().replace("/", "_"));
         logger.info(
                 ResourceLoader.getMessage("cwl.exec.scatter.job.fill.command", placeholder));
         IOUtil.createCommandScript(placeholder, commands.get(commands.size() - 1));

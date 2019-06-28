@@ -26,6 +26,7 @@ public class FlowExecConf {
     private String queue;
     private String project;
     private boolean rerunnable;
+    private String processors;
     private PostFailureScript pfscript;
     private Map<String, StepExecConf> steps;
 
@@ -125,8 +126,25 @@ public class FlowExecConf {
     }
 
     /**
-     * Returns the step process configurations
+     * Returns the LSF processors (-n) option
      * 
+     * @return The LSF processors option
+     */
+    public String getProcessors() {
+        return processors;
+    }
+    /**
+     * Sets the LSF processors (-n) option
+     *
+     * @param processors
+     *        The LSF processors requirement option
+     */
+    public void setProcessors(String processors) {
+        this.processors = processors;
+    }
+    /**
+     * Returns the step process configurations
+     *
      * @return Step process configurations, the name of step is the key, the
      *         configuration of step is the value
      */

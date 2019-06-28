@@ -70,7 +70,7 @@ final class DockerCommandBuilder {
      */
     protected static List<String> buildDockerRun(DockerRequirement dockerReq,
             CWLCommandInstance instance,
-            List<String> srcCommands) {
+            List<String> srcCommands, int scatterIndex) {
         CommandLineTool commandLineTool = (CommandLineTool) instance.getProcess();
         String owner = instance.getOwner();
         List<String> commands = new ArrayList<>();
@@ -89,6 +89,10 @@ final class DockerCommandBuilder {
         Map<String, String> runtime = instance.getRuntime();
         // map working directory to docker outdir
         String tmpOutput = Paths.get(runtime.get(CommonUtil.RUNTIME_TMP_DIR)).toString();
+        if (scatterIndex > 0) {
+            // scatter job
+        	tmpOutput = tmpOutput + File.separator + String.format("scatter%d", scatterIndex);
+        }
         commands.add(String.format(volumeRW, tmpOutput, dockerOutdir));
         // map working directory to docker /tmp
         String tmp = Paths.get(runtime.get(CommonUtil.RUNTIME_TMP_DIR)).toString();
@@ -219,7 +223,15 @@ final class DockerCommandBuilder {
         CWLTypeSymbol inputTypeSymbol = inputType.getSymbol();
         switch (inputTypeSymbol) {
         case FILE:
-            files.add((CWLFile) value);
+            if(value instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<CWLFile> fileArray = (List<CWLFile>) value;
+                for (CWLFile f : fileArray) {
+                    files.add(f);
+                }
+            } else {
+                files.add((CWLFile) value);
+            }
             break;
         case DIRECTORY:
             files.add((CWLDirectory) value);

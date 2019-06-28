@@ -113,7 +113,7 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
         }
         String app = addLSFOptionsFromExecConf(instance, commands);
         if (dockerRequirement != null) {
-            commands.addAll(LSFCommandUtil.prepareLSFDocker(app, dockerRequirement, instance));
+            commands.addAll(LSFCommandUtil.prepareLSFDocker(app, dockerRequirement, instance, scatterIndex));
         }
         // The current job is not ready, using -H to hold it
         if (baseCommands == null) {
@@ -157,6 +157,10 @@ final class CWLLSFCommandServiceImpl implements CWLCommandService {
                 commands.addAll(buildResCommand(resReq));
             }
         }
+	String processors = CWLExecConfUtil.getProcessors(flowExecConf, instance.getName());
+	if (processors != null && processors.length() > 0) {
+	    commands.addAll(Arrays.asList("-n", processors));
+	}		
         String app = CWLExecConfUtil.getApp(flowExecConf, instance.getName());
         if (app != null && app.length() > 0) {
             commands.addAll(Arrays.asList("-app", app));

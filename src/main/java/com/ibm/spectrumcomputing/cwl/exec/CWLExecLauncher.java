@@ -448,7 +448,7 @@ public class CWLExecLauncher {
     }
 
     private void showVersion() {
-        CWLExecUtil.printStderrMsg("0.2.1");
+        CWLExecUtil.printStderrMsg("0.2.2");
         System.exit(0);
     }
 

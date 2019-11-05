@@ -3,12 +3,9 @@
 
 FROM ubuntu
 
-ARG CWLTOP
-ENV CWLTOP $CWLTOP
-
 RUN echo $CWLTOP
 RUN echo ${CWLTOP}
-ADD ${CWLTOP} /root/cwlexec
+ADD . /root/cwlexec
 
 #RUN apt update
 #RUN apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common

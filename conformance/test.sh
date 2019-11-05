@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ls /root
+ls /root/cwlexec
 exit 0
 
 groupadd docker

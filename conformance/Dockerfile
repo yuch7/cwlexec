@@ -8,6 +8,6 @@ RUN apt update && apt install -y docker-ce docker-ce-cli containerd.io
 RUN apt install -y python3 python3-pip
 RUN pip3 install cwltest
 
-ADD run.sh /
-ENTRYPOINT ["/run.sh"]
+ADD test.sh /
+ENTRYPOINT ["/test.sh"]
 

@@ -8,7 +8,6 @@ ENV CWLTOP $CWLTOP
 
 RUN echo $CWLTOP
 RUN echo ${CWLTOP}
-RUN ls $CWLTOP
 ADD ${CWLTOP} /root/cwlexec
 
 #RUN apt update

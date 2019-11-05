@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ls /root
+exit 0
+
 groupadd docker
 gpasswd -a lsfadmin docker
 source /opt/ibm/lsfsuite/lsf/conf/profile.lsf

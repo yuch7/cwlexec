@@ -1,5 +1,6 @@
 language: java
-script: true
-
 jdk:
   - openjdk8
+
+script: mvn clean package
+

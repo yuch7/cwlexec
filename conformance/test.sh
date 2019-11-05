@@ -1,10 +1,5 @@
 #!/bin/bash
 
-ls /root
-ls /root/cwlexec
-ls /
-exit 0
-
 groupadd docker
 gpasswd -a lsfadmin docker
 source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
@@ -14,6 +9,5 @@ ROLE=master start_lsf
 lsid
 lshosts
 
-cd /home/lsfadmin/cwlexec/src/test/integration-test
-su lsfadmin -c "source /opt/ibm/lsfsuite/lsf/conf/profile.lsf && ./run.sh"
+su lsfadmin -c "source /opt/ibm/lsfsuite/lsf/conf/profile.lsf && cd ~/cwlexec/src/test/integration-test && ./run.sh"
 

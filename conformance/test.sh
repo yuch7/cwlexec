@@ -2,6 +2,7 @@
 
 ls /root
 ls /root/cwlexec
+ls /
 exit 0
 
 groupadd docker

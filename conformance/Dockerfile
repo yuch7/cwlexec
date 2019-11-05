@@ -16,6 +16,6 @@ ADD . /root/cwlexec
 #RUN pip3 install cwltest
 
 #ADD --chown=lsfadmin:lsfadmin ${CWLTOP} /home/lsfadmin/cwlexec
-ADD test.sh /
+ADD conformance/test.sh /
 ENTRYPOINT ["/test.sh"]
 

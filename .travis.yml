@@ -4,6 +4,5 @@ jdk:
 
 script:
   - mvn clean package
-  - docker build --build-arg CWLTOP=${PWD} -t cwlexec-test conformance/
-  - docker run -v /var/run/docker.sock:/var/run/docker.sock cwlexec-test
+  - echo $(pwd)
 

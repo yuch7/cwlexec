@@ -8,6 +8,7 @@ RUN apt update && apt install -y docker-ce docker-ce-cli containerd.io
 RUN apt install -y python3 python3-pip
 RUN pip3 install cwltest
 
+ADD --chown=lsfadmin:lsfadmin $(pwd) /home/lsfadmin/cwlexec
 ADD test.sh /
 ENTRYPOINT ["/test.sh"]
 

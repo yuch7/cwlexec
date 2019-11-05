@@ -9,6 +9,6 @@ ROLE=master start_lsf
 lsid
 lshosts
 
-cd /cwlexec/src/test/integration-test
+cd /home/lsfadmin/cwlexec/src/test/integration-test
 su lsfadmin -c "source /opt/ibm/lsfsuite/lsf/conf/profile.lsf && ./run.sh"
 

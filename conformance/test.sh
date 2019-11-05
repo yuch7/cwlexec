@@ -1,7 +1,7 @@
 #!/bin/bash
 
 groupadd docker
-sudo gpasswd -a lsfadmin docker
+gpasswd -a lsfadmin docker
 source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
 source <(head -n265 /start_lsf_ce.sh | tail -n +7)
 ROLE=master config_lsfce
@@ -10,4 +10,5 @@ lsid
 lshosts
 
 cd /cwlexec/src/test/integration-test
+su lsfadmin -c "source /opt/ibm/lsfsuite/lsf/conf/profile.lsf && ./run.sh"
 

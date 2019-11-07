@@ -8,6 +8,6 @@ script:
   - sudo mkdir -p /opt/ibm
   - docker pull ibmcom/lsfce:10.2.0
   - docker run --rm -v /opt/ibm/:/hostibm --entrypoint=/bin/cp ibmcom/lsfce:10.2.0 -rf /opt/ibm/lsfsuite/lsf /start_lsf_ce.sh /hostibm
-  - sudo chown -R travis:travis /opt/ibm/*
+  - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - conformance/test.sh
 

@@ -7,7 +7,7 @@ script:
   - sudo useradd lsfadmin && sudo usermod -aG docker lsfadmin
   - sudo mkdir -p /opt/ibm
 #  - docker build -t cwlexec-test -f conformance/Dockerfile .
-  - docker run --rm -v /opt/ibm/:/hostibm -v $(pwd)/conformance/test.sh:/test.sh --entrypoint=/test.sh ibmcom/lsfce:10.2.0
+  - docker run --rm -v /opt/ibm/:/hostibm -v $(pwd)/conformance/test.sh:/test.sh --entrypoint=/test.sh ibmcom/lsfce:10.2.0 `uname -n`
 #  - docker pull ibmcom/lsfce:10.2.0
 #  - docker run --rm -v /opt/ibm/:/hostibm --entrypoint=/bin/cp ibmcom/lsfce:10.2.0 -rf /opt/ibm/lsfsuite/lsf /start_lsf_ce.sh /hostibm
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*

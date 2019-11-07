@@ -8,7 +8,7 @@ script:
   - sudo mkdir -p /opt/ibm
   - docker pull ibmcom/lsfce:10.2.0
   - docker run --rm -v /opt/ibm/:/hostibm --entrypoint=/bin/cp ibmcom/lsfce:10.2.0 -rf /opt/ibm/lsfsuite/lsf /start_lsf_ce.sh /hostibm
-  - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
+#  - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - LSF_TOP=/opt/ibm/lsf
   - sudo echo 'LSB_RESOURCE_ENFORCE="cpu memory"' >> $LSF_TOP/conf/lsf.conf
   - IMAGE_HOST=`awk -F'"' '/MASTER_LIST/ {print $(NF-1)}' $LSF_TOP/conf/lsf.conf`

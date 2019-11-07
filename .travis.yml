@@ -5,11 +5,12 @@ jdk:
 script:
 #  - mvn clean package
   - sudo useradd lsfadmin && sudo usermod -aG docker lsfadmin
-  - sudo mkdir -p /opt/ibm
-  - docker run --rm -v /opt/ibm/:/hostibm -v $(pwd)/conformance/test.sh:/test.sh --entrypoint=/test.sh ibmcom/lsfce:10.2.0 `uname -n`
+  - sudo mkdir -p /opt/ibm/lsfsuite
+  - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
-  - sudo -s && source /opt/ibm/lsf/conf/profile.lsf && lsadmin limstartup && lsadmin resstartup && badmin hstartup
+  - sudo -s conformance/start.sh
   - sleep 10
+  - sudo su lsfadmin bhosts
   - lsid && bhosts
 #  - conformance/test.sh
 

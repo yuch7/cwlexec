@@ -10,8 +10,8 @@ script:
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
   - sudo apt update
-  - sudo apt install -y python3 python3-pip
-  - sudo -s pip3 install cwltest
+  - sudo apt install -y python3 python3-setuptools python3-pip
+  - sudo pip3 install cwltest
   - sudo chown -R lsfadmin:lsfadmin ./*
   - sudo su lsfadmin bash -c conformance/test.sh
 

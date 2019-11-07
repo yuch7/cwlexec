@@ -9,6 +9,7 @@ script:
   - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
+  - sudo apt update
   - sudo apt install -y python3 python3-pip
   - sudo -s pip3 install cwltest
   - sudo chown -R lsfadmin:lsfadmin ./*

@@ -10,8 +10,5 @@ script:
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
   - sleep 10
-  - sudo su lsfadmin
-  - source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
-  - lsid && bhosts
-#  - conformance/test.sh
+  - sudo su lsfadmin bash -c conformance/test.sh
 

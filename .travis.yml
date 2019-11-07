@@ -4,6 +4,9 @@ jdk:
 
 script:
   - mvn clean package
-  - docker build -t cwlexec-test -f conformance/Dockerfile .
-  - docker run -v /var/run/docker.sock:/var/run/docker.sock cwlexec-test
+  - useradd lsfadmin && usermod -aG docker lsfadmin
+  - docker pull ibmcom/lsfce:10.2.0
+  - ls /opt
+#  - docker build -t cwlexec-test -f conformance/Dockerfile .
+#  - docker run -v /var/run/docker.sock:/var/run/docker.sock cwlexec-test
 

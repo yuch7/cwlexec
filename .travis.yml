@@ -11,5 +11,6 @@ script:
   - sudo -s conformance/start.sh
   - sudo apt install -y python3 python3-pip
   - sudo -s pip3 install cwltest
+  - sudo chown -R lsfadmin:lsfadmin ./*
   - sudo su lsfadmin bash -c conformance/test.sh
 

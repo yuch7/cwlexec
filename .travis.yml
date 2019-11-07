@@ -9,8 +9,16 @@ script:
   - docker pull ibmcom/lsfce:10.2.0
   - docker run --rm -v /opt/ibm/:/hostibm --entrypoint=/bin/cp ibmcom/lsfce:10.2.0 -rf /opt/ibm/lsfsuite/lsf /start_lsf_ce.sh /hostibm
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
-  - ls -l /opt/ibm
-  - ls -l /opt/ibm/lsf
-  - ls -l /opt/ibm/lsf/conf
-  - conformance/test.sh
+  - LSF_TOP=/opt/ibm/lsf
+  - sudo echo 'LSB_RESOURCE_ENFORCE="cpu memory"' >> $LSF_TOP/conf/lsf.conf
+  - IMAGE_HOST=`awk -F'"' '/MASTER_LIST/ {print $(NF-1)}' $LSF_TOP/conf/lsf.conf`
+  - sudo sed -i "s/${IMAGE_HOST}.*$/${IMAGE_HOST}   \!   \!   1   \(mg docker\)/g" $LSF_TOP/conf/lsf.cluster.cluster1
+  - sudo sed -i "/End Resource/i\   docker     Boolean \(\)       \(\)          \(docker\)" $LSF_TOP/conf/lsf.shared
+
+  - source $LSF_TOP/conf/profile.lsf
+  - source <(head -n265 $LSF_TOP/start_lsf_ce.sh | tail -n +7)
+  - ROLE=master sudo config_lsfce
+  - ROLE=master sudo start_lsf
+  - lsid && bhosts
+#  - conformance/test.sh
 

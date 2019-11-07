@@ -1,5 +1,6 @@
 #!/bin/bash
 
 source /opt/ibm/lsfsuite/lsf/conf/profile.lsf
-lsid
-bhosts
+pwd
+cd src/test/integration-test
+./run.sh

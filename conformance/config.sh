@@ -15,5 +15,8 @@ echo 'LSB_RESOURCE_ENFORCE="cpu memory"' >> $LSF_TOP/conf/lsf.conf
 sed -i "s/${MYHOST}.*$/${MYHOST}   \!   \!   1   \(mg docker\)/g" $LSF_TOP/conf/lsf.cluster.cluster1
 sed -i "/End Resource/i\   docker     Boolean \(\)       \(\)          \(docker\)" $LSF_TOP/conf/lsf.shared
 
+sed -i "s/lsfadmins.*lsfadmin.*/lsfadmins     \(travis\)/g" $LSF_TOP/conf/lsbatch/cluster1/configdir/lsb.users
+sed -i "s/Administrators = lsfadmin/Administrators = travis/g" $LSF_TOP/conf/lsf.cluster.cluster1
+
 cp -rf $LSF_TOP /ibmtop
 

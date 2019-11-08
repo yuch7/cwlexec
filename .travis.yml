@@ -11,12 +11,11 @@ script:
   - mvn clean package
 #  - sudo useradd lsfadmin && sudo usermod -aG docker lsfadmin
   - sudo mkdir -p /opt/ibm/lsfsuite
-#  - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
+  - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
+  - sudo chown -R travis:travis /opt/ibm/*
 #  - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
-#  - sudo -s conformance/start.sh
+  - sudo -s conformance/start.sh
 #  - sudo chown -R lsfadmin:lsfadmin ../cwlexec
-  - ls -l ..
-  - ls -l target
 #  - sudo su lsfadmin bash -c conformance/test.sh
   - conformance/test.sh
 

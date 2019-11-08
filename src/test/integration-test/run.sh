@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+
 rm -f test.*.log
 
 LOG_FILE="test.`date "+%Y-%m-%d-%H-%M"`.log"

@@ -14,8 +14,8 @@ script:
   - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
-  - sudo chown -R lsfadmin:lsfadmin ./*
-  - ls
-  - ls target
+  - sudo chown -R lsfadmin:lsfadmin ../cwlexec
+  - ls -l ..
+  - ls -l target
   - sudo su lsfadmin bash -c conformance/test.sh
 

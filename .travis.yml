@@ -15,5 +15,7 @@ script:
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
   - sudo chown -R lsfadmin:lsfadmin ./*
+  - ls
+  - ls target
   - sudo su lsfadmin bash -c conformance/test.sh
 

@@ -2,6 +2,11 @@ language: java
 jdk:
   - openjdk8
 
+before_install:
+  - sudo apt update
+  - sudo apt install -y python3 python3-setuptools python3-pip
+  - sudo pip3 install cwltest
+
 script:
   - mvn clean package
   - sudo useradd lsfadmin && sudo usermod -aG docker lsfadmin
@@ -9,9 +14,6 @@ script:
   - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`
   - sudo chown -R lsfadmin:lsfadmin /opt/ibm/*
   - sudo -s conformance/start.sh
-  - sudo apt update
-  - sudo apt install -y python3 python3-setuptools python3-pip
-  - sudo pip3 install cwltest
   - sudo chown -R lsfadmin:lsfadmin ./*
   - sudo su lsfadmin bash -c conformance/test.sh
 

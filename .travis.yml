@@ -9,7 +9,6 @@ before_install:
 
 script:
   - mvn clean package
-  - tar zxf target/cwlexec*.tar.gz -C target/
   - sudo useradd lsfadmin && sudo usermod -aG docker lsfadmin
   - sudo mkdir -p /opt/ibm/lsfsuite
   - docker run --rm -v /opt/ibm/lsfsuite:/ibmtop -v $(pwd)/conformance/config.sh:/config.sh --entrypoint=/config.sh ibmcom/lsfce:10.2.0 `uname -n`

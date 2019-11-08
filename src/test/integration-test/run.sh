@@ -23,7 +23,7 @@ log "prepare cwlexec ..."
 which cwlexec >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   log "try to prepare cwlexec from $CODE_REPO/target."
-  if [ -d $CODE_REPO/target ]; then
+  if [ -d "$CODE_REPO/target" ]; then
     cd $CODE_REPO/target
     cwlexec_pkg=`ls | grep cwlexec | grep tar.gz`
     tar -zxf $cwlexec_pkg

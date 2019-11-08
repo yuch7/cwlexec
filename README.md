@@ -1,4 +1,5 @@
 # cwlexec
+[![Build Status](https://travis-ci.com/jxngao/cwlexec.svg?branch=master)](https://travis-ci.com/jxngao/cwlexec)
 
 <a href="https://www.youtube.com/watch?v=_jSTZMWtPAY"><img align="right" src="cwlexec-introduction.png" height="224" width="320" alt="[Video] CWLEXEC: A new open source tool to run CWL workflows on LSF"></a>
 

@@ -15,3 +15,7 @@ script:
   - sudo -s conformance/start.sh
   - conformance/test.sh
 
+notifications:
+  email:
+    - jxgao@cn.ibm.com
+
